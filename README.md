@@ -1,4 +1,4 @@
-# ProjectHouse
+# Deep Dreams
 A puzzle/mystery Horror game made in Unity.
 
 # Requirements
