@@ -4,30 +4,14 @@ using UnityEngine.EventSystems;
 
 namespace DeepDreams.UI.Effects
 {
-    public class TextSlide : MonoBehaviour
+    public class TextSlide : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [Range(0.0f, 3.0f)] [SerializeField] private float slideTime = 0.05f;
-
-        private TMP_Text _textMesh;
+        private Vector3 _posVelocity;
         private Vector2 _startPos;
         private Vector2 _targetPos;
-        private Vector3 _posVelocity;
 
-        // private void Reset() {
-        //     EventTrigger trigger = GetComponentInParent<EventTrigger>();
-        //
-        //     if (trigger == null) trigger = gameObject.AddComponent<EventTrigger>();
-        //
-        //     EventTrigger.Entry entry = new EventTrigger.Entry();
-        //     entry.eventID = EventTriggerType.PointerEnter;
-        //     entry.callback.AddListener(eventData => OnHoverEnter((PointerEventData)eventData));
-        //     trigger.triggers.Add(entry);
-        //
-        //     // entry = new EventTrigger.Entry();
-        //     // entry.eventID = EventTriggerType.PointerExit;
-        //     // entry.callback.AddListener(OnHoverExit);
-        //     // trigger.triggers.Add(entry);
-        // }
+        private TMP_Text _textMesh;
 
         // Start is called before the first frame update
         private void Awake()
@@ -46,15 +30,13 @@ namespace DeepDreams.UI.Effects
                     Time.unscaledDeltaTime);
         }
 
-        public void OnHoverEnter(BaseEventData eventData)
+        public void OnPointerEnter(PointerEventData eventData)
         {
-            PointerEventData pointerEventData = (PointerEventData)eventData; // For future reference.
             _targetPos = _startPos + new Vector2(20.0f, 0.0f);
         }
 
-        public void OnHoverExit(BaseEventData eventData)
+        public void OnPointerExit(PointerEventData eventData)
         {
-            PointerEventData pointerEventData = (PointerEventData)eventData;
             _targetPos = _startPos;
         }
     }

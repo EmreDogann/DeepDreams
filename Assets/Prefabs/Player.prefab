@@ -403,6 +403,7 @@ MonoBehaviour:
   stepTime: 0.55
   enableStabilization: 0
   stabilizationDistance: 5
+  enableDebugging: 0
 --- !u!1 &5440670880944876648
 GameObject:
   m_ObjectHideFlags: 0

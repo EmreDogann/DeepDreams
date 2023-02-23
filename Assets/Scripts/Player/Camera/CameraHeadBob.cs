@@ -1,4 +1,4 @@
-﻿using DeepDreams.Audio;
+﻿using DeepDreams.ScriptableObjects;
 using MyBox;
 using UnityEngine;
 
@@ -13,6 +13,10 @@ namespace DeepDreams.Player.Camera
 
         [SerializeField] private Transform camera;
         [SerializeField] private PlayerMotor playerController;
+
+        [Separator("Audio")]
+        [SerializeField] private AudioEventSO footstepWalk;
+        [SerializeField] private AudioEventSO footstepRun;
 
         [Separator("Bob Motion")]
         [SerializeField] private AnimationCurve yMotion;
@@ -36,35 +40,35 @@ namespace DeepDreams.Player.Camera
         [SerializeField] private bool enableStabilization = true;
         [ConditionalField("enableStabilization", false, true)] [SerializeField] private float stabilizationDistance = 5.0f;
 
+        [Separator("Debugging")]
+        [SerializeField] private bool enableDebugging;
+        private float _motionAmplitudeMultiplier;
+        private float _motionAmplitudeMultiplierVelocity;
+
+        private bool _onStepCalled;
+
         private Vector3 _startPos;
         private Quaternion _startRot;
+        private int _stepCount;
+        private float _targetAmplitudeMultiplier;
+        private float _tiltAmplitudeMultiplier;
+        private float _tiltAmplitudeMultiplierVelocity;
 
         private float _walkingTime;
-        private int _stepCount;
-        private float _motionAmplitudeMultiplier;
-        private float _tiltAmplitudeMultiplier;
-        private float _targetAmplitudeMultiplier;
-        private float _motionAmplitudeMultiplierVelocity;
-        private float _tiltAmplitudeMultiplierVelocity;
 
         private float _xTiltTarget;
         private float _xTiltVelocity;
 
-        private bool _onStepCalled;
-
-        private bool IsMoving()
-        {
-            return playerController.IsMoving && playerController.IsGrounded;
-        }
-
-        private bool IsRunning()
-        {
-            return playerController.IsRunning && !playerController.IsCrouching && playerController.IsMovingForward &&
-                   playerController.IsGrounded;
-        }
-
         private void Start()
         {
+            _startPos = camera.localPosition;
+            _startRot = camera.localRotation;
+
+            if (!enableDebugging)
+            {
+                return;
+            }
+
             DebugGUI.SetGraphProperties("bobbingX", "X", -0.05f, 0.05f, 0, new Color(1, 0, 0), false);
             DebugGUI.SetGraphProperties("bobbingY", "Y", -0.05f, 0.05f, 0, new Color(0, 1, 0), false);
             DebugGUI.SetGraphProperties("bobbingZTilt", "ZTilt", -0.25f, 0.25f, 0, new Color(0, 1, 1), false);
@@ -72,9 +76,33 @@ namespace DeepDreams.Player.Camera
             DebugGUI.SetGraphProperties("bobbingXEvent", "EventX", -0.05f, 0.05f, 0, new Color(1, 1, 0), false);
             DebugGUI.SetGraphProperties("bobbingYEvent", "EventY", -0.05f, 0.05f, 0, new Color(1, 0, 1), false);
             DebugGUI.SetGraphProperties("bobbingZTiltEvent", "EventZTilt", -0.25f, 0.25f, 0, new Color(1, 1, 1), false);
+        }
 
-            _startPos = camera.localPosition;
-            _startRot = camera.localRotation;
+        private void Update()
+        {
+            if (!enable)
+            {
+                return;
+            }
+
+            if (enableDebugging)
+            {
+                if (!_onStepCalled)
+                {
+                    DebugGUI.Graph("bobbingXEvent", 0);
+                    DebugGUI.Graph("bobbingYEvent", 0);
+                    DebugGUI.Graph("bobbingZTiltEvent", 0);
+                }
+
+                _onStepCalled = false;
+
+                DebugGUI.Graph("bobbingX", camera.localPosition.x);
+                DebugGUI.Graph("bobbingY", camera.localPosition.y);
+                DebugGUI.Graph("bobbingZTilt", WrapAngle(camera.localEulerAngles.z));
+            }
+
+            CheckMotion();
+            ResetPosition();
         }
 
         private void OnEnable()
@@ -85,6 +113,17 @@ namespace DeepDreams.Player.Camera
         private void OnDisable()
         {
             playerController.OnStride -= OnStep;
+        }
+
+        private bool IsMoving()
+        {
+            return playerController.IsMoving && playerController.IsGrounded;
+        }
+
+        private bool IsRunning()
+        {
+            return playerController.IsRunning && !playerController.IsCrouching && playerController.IsMovingForward &&
+                   playerController.IsGrounded;
         }
 
         private float WrapAngle(float angle)
@@ -101,37 +140,26 @@ namespace DeepDreams.Player.Camera
 
         private void OnStep()
         {
-            AudioManager.instance.PlayOneShot(FMODEvents.instance.walkingFootstep, transform.position);
+            if (IsRunning())
+            {
+                footstepRun.Play();
+            }
+            else
+            {
+                footstepWalk.Play();
+            }
+
             _stepCount++;
+
+            if (!enableDebugging)
+            {
+                return;
+            }
 
             _onStepCalled = true;
             DebugGUI.GraphEvent("bobbingXEvent", camera.localPosition.x);
             DebugGUI.GraphEvent("bobbingYEvent", camera.localPosition.y);
             DebugGUI.GraphEvent("bobbingZTiltEvent", WrapAngle(camera.localEulerAngles.z));
-        }
-
-        private void Update()
-        {
-            if (!enable)
-            {
-                return;
-            }
-
-            if (!_onStepCalled)
-            {
-                DebugGUI.Graph("bobbingXEvent", 0);
-                DebugGUI.Graph("bobbingYEvent", 0);
-                DebugGUI.Graph("bobbingZTiltEvent", 0);
-            }
-
-            _onStepCalled = false;
-
-            DebugGUI.Graph("bobbingX", camera.localPosition.x);
-            DebugGUI.Graph("bobbingY", camera.localPosition.y);
-            DebugGUI.Graph("bobbingZTilt", WrapAngle(camera.localEulerAngles.z));
-
-            CheckMotion();
-            ResetPosition();
         }
 
         private void CheckMotion()

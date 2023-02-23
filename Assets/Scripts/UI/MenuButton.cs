@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections;
-using DeepDreams.Audio;
+using DeepDreams.ScriptableObjects;
 using MyBox;
 using TMPro;
 using UnityEditor;
@@ -15,8 +15,19 @@ namespace DeepDreams.UI
         IPointerEnterHandler,
         IPointerExitHandler,
         IPointerClickHandler,
-        IPointerDownHandler
+        IPointerDownHandler,
+        IBeginDragHandler,
+        IDragHandler,
+        IEndDragHandler
     {
+        public enum ButtonStatus
+        {
+            Normal,
+            Disabled,
+            Highlighted,
+            Pressed,
+            Selected
+        }
         [Separator("General")]
         [OverrideLabel("Interactable")] public bool isEnabled = true;
         [OverrideLabel("Toggleable")] public bool isToggleable;
@@ -26,85 +37,54 @@ namespace DeepDreams.UI
         public ColorBlock colorBlock = new ColorBlock();
 
         [Range(0.0f, 5.0f)] public float transitionTime = 0.1f;
-
-        [Serializable]
-        public class UIClickEvent : UnityEvent {}
         [Space]
         public UIClickEvent onClickEvent;
 
-        private bool _isSelected;
-        private bool _isHighlighted;
+        [Separator("Audio")]
+        [OverrideLabel("Hover Audio")] [SerializeField] private AudioEventSO uiAudioHover;
+        [OverrideLabel("Click Audio")] [SerializeField] private AudioEventSO uiAudioClick;
+
         private ButtonStatus _buttonStatus = ButtonStatus.Normal;
+        private bool _isHighlighted;
+
+        private bool _isSelected;
 
         private void Awake()
         {
-            if (targetGraphic == null) targetGraphic = GetComponentInChildren<TextMeshProUGUI>();
+            if (targetGraphic == null)
+            {
+                targetGraphic = GetComponentInChildren<TextMeshProUGUI>();
+            }
 
             if (!isEnabled)
             {
                 targetGraphic.color = colorBlock.disabledColor;
                 _buttonStatus = ButtonStatus.Disabled;
             }
-            else targetGraphic.color = colorBlock.normalColor;
-        }
-
-        public bool IsSelected()
-        {
-            return _buttonStatus == ButtonStatus.Selected;
-        }
-
-#if UNITY_EDITOR
-        protected virtual void OnValidate()
-        {
-            if (isEnabled)
-            {
-                targetGraphic.color = colorBlock.normalColor;
-                _buttonStatus = ButtonStatus.Normal;
-            }
             else
             {
-                targetGraphic.color = colorBlock.disabledColor;
-                _buttonStatus = ButtonStatus.Disabled;
+                targetGraphic.color = colorBlock.normalColor;
             }
         }
 
-        private void Reset()
-        {
-            targetGraphic = GetComponentInChildren<TextMeshProUGUI>();
-        }
-#endif
+        public void OnBeginDrag(PointerEventData eventData) {}
 
-        public virtual void OnPointerEnter(PointerEventData eventData)
-        {
-            if (!isEnabled || IsSelected()) return;
-            _isHighlighted = true;
-            _buttonStatus = ButtonStatus.Highlighted;
+        public void OnDrag(PointerEventData eventData) {}
 
-            StartCoroutine(TransitionColor(colorBlock.highlightedColor, transitionTime));
-            AudioManager.instance.PlayOneShot(FMODEvents.instance.UI_Hover, Vector3.zero);
-        }
-
-        public virtual void OnPointerExit(PointerEventData eventData)
-        {
-            if (!isEnabled || IsSelected()) return;
-            _isHighlighted = false;
-            _buttonStatus = ButtonStatus.Normal;
-
-            StartCoroutine(TransitionColor(colorBlock.normalColor, transitionTime));
-        }
-
-        public void OnPointerDown(PointerEventData eventData)
-        {
-            if (!isEnabled) return;
-            _buttonStatus = ButtonStatus.Pressed;
-            StartCoroutine(TransitionColor(colorBlock.pressedColor, transitionTime));
-            AudioManager.instance.PlayOneShot(FMODEvents.instance.UI_Click, Vector3.zero);
-        }
+        public void OnEndDrag(PointerEventData eventData) {}
 
         public virtual void OnPointerClick(PointerEventData eventData)
         {
-            if (!isEnabled) return;
-            if (isToggleable) _isSelected = !_isSelected;
+            if (!isEnabled)
+            {
+                return;
+            }
+
+
+            if (isToggleable)
+            {
+                _isSelected = !_isSelected;
+            }
 
             if (_isSelected)
             {
@@ -128,6 +108,50 @@ namespace DeepDreams.UI
             onClickEvent?.Invoke();
         }
 
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (!isEnabled)
+            {
+                return;
+            }
+
+            _buttonStatus = ButtonStatus.Pressed;
+            StartCoroutine(TransitionColor(colorBlock.pressedColor, transitionTime));
+            uiAudioClick?.Play();
+        }
+
+        public virtual void OnPointerEnter(PointerEventData eventData)
+        {
+            if (!isEnabled || IsSelected())
+            {
+                return;
+            }
+
+            _isHighlighted = true;
+            _buttonStatus = ButtonStatus.Highlighted;
+
+            StartCoroutine(TransitionColor(colorBlock.highlightedColor, transitionTime));
+            uiAudioHover?.Play();
+        }
+
+        public virtual void OnPointerExit(PointerEventData eventData)
+        {
+            if (!isEnabled || IsSelected())
+            {
+                return;
+            }
+
+            _isHighlighted = false;
+            _buttonStatus = ButtonStatus.Normal;
+
+            StartCoroutine(TransitionColor(colorBlock.normalColor, transitionTime));
+        }
+
+        public bool IsSelected()
+        {
+            return _buttonStatus == ButtonStatus.Selected;
+        }
+
         private IEnumerator TransitionColor(Color newColor, float transitionTime)
         {
             float timer = 0.0f;
@@ -143,14 +167,8 @@ namespace DeepDreams.UI
             }
         }
 
-        public enum ButtonStatus
-        {
-            Normal,
-            Disabled,
-            Highlighted,
-            Pressed,
-            Selected
-        }
+        [Serializable]
+        public class UIClickEvent : UnityEvent {}
 
         [Serializable]
         public class ColorBlock
@@ -223,5 +241,26 @@ namespace DeepDreams.UI
             }
 #endif
         }
+
+#if UNITY_EDITOR
+        protected virtual void OnValidate()
+        {
+            if (isEnabled)
+            {
+                targetGraphic.color = colorBlock.normalColor;
+                _buttonStatus = ButtonStatus.Normal;
+            }
+            else
+            {
+                targetGraphic.color = colorBlock.disabledColor;
+                _buttonStatus = ButtonStatus.Disabled;
+            }
+        }
+
+        private void Reset()
+        {
+            targetGraphic = GetComponentInChildren<TextMeshProUGUI>();
+        }
+#endif
     }
 }

@@ -357,16 +357,16 @@ MonoBehaviour:
   m_Name: FMODStudioSettings
   m_EditorClassIdentifier: 
   switchSettingsMigration: 1
-  HasSourceProject: 1
-  HasPlatforms: 1
+  HasSourceProject: 0
+  HasPlatforms: 0
   sourceProjectPath: ../../../FMOD/Projects/Deep Dreams/Deep Dreams.fspro
-  sourceBankPath: ../../../FMOD/Projects/Deep Dreams/Build
+  sourceBankPath: Assets/Audio/FMOD/Desktop
   sourceBankPathUnformatted: 
   BankRefreshCooldown: 5
   ShowBankRefreshWindow: 0
-  AutomaticEventLoading: 1
-  BankLoadType: 0
-  AutomaticSampleLoading: 0
+  AutomaticEventLoading: 0
+  BankLoadType: 1
+  AutomaticSampleLoading: 1
   EncryptionKey: 
   ImportType: 0
   TargetAssetPath: FMODBanks
@@ -385,7 +385,12 @@ MonoBehaviour:
   - Master
   Banks:
   - SFX
-  BanksToLoad: []
+  - UI
+  BanksToLoad:
+  - Master
+  - Master.strings
+  - SFX
+  - UI
   LiveUpdatePort: 9264
   EnableMemoryTracking: 0
   AndroidUseOBB: 0
@@ -428,7 +433,7 @@ MonoBehaviour:
   active: 1
   Properties:
     LiveUpdate:
-      Value: 1
+      Value: 0
       HasValue: 1
     LiveUpdatePort:
       Value: 0
