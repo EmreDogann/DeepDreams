@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bd96345111b6ce34188000966635d391, type: 3}
-  m_Name: UI_Hover
+  m_Name: UI_Hover_2
   m_EditorClassIdentifier: 
   audioReference:
     Guid:
-      Data1: 919002201
-      Data2: 1188890510
-      Data3: 890459778
-      Data4: -1195301522
-    Path: event:/UI/Hover
+      Data1: -1669254515
+      Data2: 1108878304
+      Data3: 190922648
+      Data4: -946577367
+    Path: event:/UI/Hover 2

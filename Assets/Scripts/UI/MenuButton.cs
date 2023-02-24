@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections;
-using DeepDreams.ScriptableObjects;
+using DeepDreams.ScriptableObjects.Audio;
 using MyBox;
 using TMPro;
 using UnityEditor;
@@ -28,6 +28,10 @@ namespace DeepDreams.UI
             Pressed,
             Selected
         }
+
+        public static Action<AudioReference> OnButtonHover;
+        public static Action<AudioReference> OnButtonClick;
+
         [Separator("General")]
         [OverrideLabel("Interactable")] public bool isEnabled = true;
         [OverrideLabel("Toggleable")] public bool isToggleable;
@@ -40,13 +44,15 @@ namespace DeepDreams.UI
         [Space]
         public UIClickEvent onClickEvent;
 
-        [Separator("Audio")]
-        [OverrideLabel("Hover Audio")] [SerializeField] private AudioEventSO uiAudioHover;
-        [OverrideLabel("Click Audio")] [SerializeField] private AudioEventSO uiAudioClick;
+        [Separator("Audio Overrides")]
+        [SerializeField] private bool playHoverAudio = true;
+        [SerializeField] private bool playClickAudio = true;
+
+        [OverrideLabel("Hover Audio")] [SerializeField] private AudioReference uiAudioHoverOverride;
+        [OverrideLabel("Click Audio")] [SerializeField] private AudioReference uiAudioClickOverride;
 
         private ButtonStatus _buttonStatus = ButtonStatus.Normal;
         private bool _isHighlighted;
-
         private bool _isSelected;
 
         private void Awake()
@@ -117,7 +123,11 @@ namespace DeepDreams.UI
 
             _buttonStatus = ButtonStatus.Pressed;
             StartCoroutine(TransitionColor(colorBlock.pressedColor, transitionTime));
-            uiAudioClick?.Play();
+
+            if (playClickAudio)
+            {
+                OnButtonClick?.Invoke(uiAudioClickOverride);
+            }
         }
 
         public virtual void OnPointerEnter(PointerEventData eventData)
@@ -131,7 +141,11 @@ namespace DeepDreams.UI
             _buttonStatus = ButtonStatus.Highlighted;
 
             StartCoroutine(TransitionColor(colorBlock.highlightedColor, transitionTime));
-            uiAudioHover?.Play();
+
+            if (playHoverAudio)
+            {
+                OnButtonHover?.Invoke(uiAudioHoverOverride);
+            }
         }
 
         public virtual void OnPointerExit(PointerEventData eventData)

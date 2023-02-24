@@ -5,38 +5,25 @@ using UnityEngine;
 
 namespace DeepDreams.UI
 {
-    public class ViewManager : MonoBehaviour
+    public class UIManager : MonoBehaviour
     {
-        public static ViewManager instance { get; private set; }
-
         [SerializeField] private View baseView; // Quick hacky workaround
         [SerializeField] private View inGameView;
 
         [SerializeField] private View startingView;
-        private View[] _views;
-
-        private View _currentView;
+        [SerializeField] private BoolEventChannelSO onGamePauseSOEvent;
         private readonly Stack<View> _history = new Stack<View>();
 
+        private View _currentView;
+        private View[] _views;
+
         public Action<bool> OnGamePause;
-        [SerializeField] private BoolEventChannelSO onGamePauseSOEvent;
+        public static UIManager instance { get; private set; }
 
         private void Awake()
         {
             instance = this;
             HideCursor();
-        }
-
-        private void ShowCursor()
-        {
-            Cursor.lockState = CursorLockMode.Confined;
-            Cursor.visible = true;
-        }
-
-        private void HideCursor()
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
         }
 
         private void Start()
@@ -59,7 +46,22 @@ namespace DeepDreams.UI
                 Show(startingView);
                 ShowCursor();
             }
-            else instance.inGameView.Open();
+            else
+            {
+                instance.inGameView.Open();
+            }
+        }
+
+        private void ShowCursor()
+        {
+            Cursor.lockState = CursorLockMode.Confined;
+            Cursor.visible = true;
+        }
+
+        private void HideCursor()
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
         }
 
         private bool IsOnlyView()
@@ -76,7 +78,10 @@ namespace DeepDreams.UI
         {
             for (int i = 0; i < instance._views.Length; i++)
             {
-                if (instance._views[i] is T tView) return tView;
+                if (instance._views[i] is T tView)
+                {
+                    return tView;
+                }
             }
 
             return null;
@@ -87,11 +92,17 @@ namespace DeepDreams.UI
         {
             for (int i = 0; i < instance._views.Length; i++)
             {
-                if (instance._views[i] is not T) continue;
+                if (instance._views[i] is not T)
+                {
+                    continue;
+                }
 
                 if (instance._currentView != null)
                 {
-                    if (remember) instance._history.Push(instance._currentView);
+                    if (remember)
+                    {
+                        instance._history.Push(instance._currentView);
+                    }
 
                     instance._currentView.Close();
                 }
@@ -114,7 +125,10 @@ namespace DeepDreams.UI
         {
             if (instance._currentView != null)
             {
-                if (remember) instance._history.Push(instance._currentView);
+                if (remember)
+                {
+                    instance._history.Push(instance._currentView);
+                }
 
                 instance._currentView.Close();
             }

@@ -18,4 +18,4 @@ MonoBehaviour:
       Data2: 1220774628
       Data3: -1594736255
       Data4: 45274012
-    Path: event:/UIPause
+    Path: event:/UI/Pause

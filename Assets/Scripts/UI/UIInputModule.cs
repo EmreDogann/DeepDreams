@@ -5,17 +5,20 @@ using UnityEngine.InputSystem.UI;
 
 namespace DeepDreams.UI
 {
-    public class ViewInputModule : MonoBehaviour
+    public class UIInputModule : MonoBehaviour
     {
-        private InputSystemUIInputModule _uiInputModule;
-        private InputAction _cancel;
-
         public static Action<bool> OnCancelEvent;
+        private InputAction _cancel;
+        private InputSystemUIInputModule _uiInputModule;
 
         private void Awake()
         {
             _uiInputModule = GameObject.FindGameObjectWithTag("EventSystem").GetComponent<InputSystemUIInputModule>();
-            _cancel = _uiInputModule.cancel.action;
+
+            if (_uiInputModule != null)
+            {
+                _cancel = _uiInputModule.cancel.action;
+            }
         }
 
         private void OnEnable()
@@ -30,12 +33,17 @@ namespace DeepDreams.UI
 
         public void OnCancel(InputAction.CallbackContext ctx)
         {
-            View view = ViewManager.instance.GetCurrentView();
-
-            if (!view) ViewManager.instance.Show<PauseMenuView>();
-            else ViewManager.instance.Back();
-
+            View view = UIManager.instance.GetCurrentView();
             OnCancelEvent?.Invoke(view);
+
+            if (!view)
+            {
+                UIManager.instance.Show<PauseMenuView>();
+            }
+            else
+            {
+                UIManager.instance.Back();
+            }
         }
     }
 }

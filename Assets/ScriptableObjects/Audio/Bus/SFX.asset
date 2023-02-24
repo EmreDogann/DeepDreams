@@ -9,13 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bd96345111b6ce34188000966635d391, type: 3}
-  m_Name: UI_Hover
+  m_Script: {fileID: 11500000, guid: b12798cedcff471389fa3ea365327654, type: 3}
+  m_Name: SFX
   m_EditorClassIdentifier: 
-  audioReference:
-    Guid:
-      Data1: 919002201
-      Data2: 1188890510
-      Data3: 890459778
-      Data4: -1195301522
-    Path: event:/UI/Hover
+  busPath: bus:/SFX

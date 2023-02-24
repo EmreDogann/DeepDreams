@@ -1,4 +1,5 @@
-﻿using DeepDreams.ScriptableObjects;
+﻿using DeepDreams.Audio;
+using DeepDreams.ScriptableObjects.Audio;
 using MyBox;
 using UnityEngine;
 
@@ -15,8 +16,8 @@ namespace DeepDreams.Player.Camera
         [SerializeField] private PlayerMotor playerController;
 
         [Separator("Audio")]
-        [SerializeField] private AudioEventSO footstepWalk;
-        [SerializeField] private AudioEventSO footstepRun;
+        [SerializeField] private AudioReference footstepWalk;
+        [SerializeField] private AudioReference footstepRun;
 
         [Separator("Bob Motion")]
         [SerializeField] private AnimationCurve yMotion;
@@ -142,11 +143,11 @@ namespace DeepDreams.Player.Camera
         {
             if (IsRunning())
             {
-                footstepRun.Play();
+                AudioManager.instance.PlayOneShot(footstepRun);
             }
             else
             {
-                footstepWalk.Play();
+                AudioManager.instance.PlayOneShot(footstepWalk);
             }
 
             _stepCount++;

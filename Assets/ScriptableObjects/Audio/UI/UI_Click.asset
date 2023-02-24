@@ -18,4 +18,4 @@ MonoBehaviour:
       Data2: 1257745644
       Data3: 917032079
       Data4: 825641330
-    Path: event:/UIClick
+    Path: event:/UI/Click

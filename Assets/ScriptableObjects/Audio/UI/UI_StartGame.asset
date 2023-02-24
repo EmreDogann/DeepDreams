@@ -18,4 +18,4 @@ MonoBehaviour:
       Data2: 1272251841
       Data3: 550862266
       Data4: -503453058
-    Path: event:/UIStartGame
+    Path: event:/UI/StartGame

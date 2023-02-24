@@ -1,12 +1,16 @@
-using DeepDreams.ScriptableObjects.Events;
+using System.Collections.Generic;
+using DeepDreams.ScriptableObjects.Audio;
+using FMOD.Studio;
 using FMODUnity;
 using UnityEngine;
+using STOP_MODE = FMOD.Studio.STOP_MODE;
 
 namespace DeepDreams.Audio
 {
     public class AudioManager : MonoBehaviour
     {
-        private BoolEventListener _onGamePausedEvent;
+        [SerializeField] private List<BusReference> busReferences;
+        private Dictionary<BusReference, Bus> _audioBuses;
         public static AudioManager instance { get; private set; }
 
         private void Awake()
@@ -18,32 +22,45 @@ namespace DeepDreams.Audio
 
             instance = this;
 
-            _onGamePausedEvent = GetComponent<BoolEventListener>();
+            _audioBuses = new Dictionary<BusReference, Bus>();
+            foreach (BusReference bus in busReferences) _audioBuses[bus] = RuntimeManager.GetBus(bus.busPath);
         }
 
-        private void OnEnable()
+        public void PlayOneShot(AudioReference sound, Vector3 worldPos = default)
         {
-            _onGamePausedEvent.Response.AddListener(PauseAllSound);
+            RuntimeManager.PlayOneShot(sound.audioReference, worldPos);
         }
 
-        private void OnDisable()
+        public void PlayOneShotAttached(AudioReference sound, GameObject targetGameObject)
         {
-            _onGamePausedEvent.Response.RemoveListener(PauseAllSound);
+            RuntimeManager.PlayOneShotAttached(sound.audioReference, targetGameObject);
         }
 
-        public void PlayOneShot(EventReference sound, Vector3 worldPos = default)
+        public void SetVolume(BusReference bus, float volume)
         {
-            RuntimeManager.PlayOneShot(sound, worldPos);
+            _audioBuses[bus].setVolume(volume);
         }
 
-        public void PlayOneShotAttached(EventReference sound, GameObject targetGameObject)
+        public void StopAllEvents(BusReference bus, bool immediate)
         {
-            RuntimeManager.PlayOneShotAttached(sound, targetGameObject);
+            if (immediate)
+            {
+                _audioBuses[bus].stopAllEvents(STOP_MODE.IMMEDIATE);
+            }
+            else
+            {
+                _audioBuses[bus].stopAllEvents(STOP_MODE.ALLOWFADEOUT);
+            }
         }
 
-        public void PauseAllSound(bool paused)
+        public void Pause(BusReference bus, bool paused)
         {
-            // RuntimeManager.PauseAllEvents(!paused);
+            _audioBuses[bus].setPaused(paused);
+        }
+
+        public void Resume(BusReference bus)
+        {
+            Pause(bus, false);
         }
     }
 }

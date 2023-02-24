@@ -18,4 +18,4 @@ MonoBehaviour:
       Data2: 1161654983
       Data3: -1634464093
       Data4: -8886253
-    Path: event:/FootstepRun
+    Path: event:/Player/FootstepRun

@@ -1,11 +1,8 @@
 {
-    "name": "Audio",
+    "name": "ScriptableObject.Audio",
     "rootNamespace": "DeepDreams",
     "references": [
-        "GUID:0c752da273b17c547ae705acf0f2adf2",
-        "GUID:48c9f6afdac61634db0e0f241c7d4d51",
-        "GUID:2d83c6c50022580428cb0d3ee15d613e",
-        "GUID:fb643da496231bd4c9234651accd5c1a"
+        "GUID:0c752da273b17c547ae705acf0f2adf2"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

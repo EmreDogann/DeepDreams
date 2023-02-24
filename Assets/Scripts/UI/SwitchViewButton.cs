@@ -13,22 +13,28 @@ namespace DeepDreams.UI
 
         [Inherits(typeof(View), ShowNoneElement = false, Grouping = Grouping.None, ShortName = true)]
         [SerializeField] private TypeReference targetView;
+        private readonly object[] showMethodParameters = new object[1];
 
         private MethodInfo showMethodInfo;
-        private readonly object[] showMethodParameters = new object[1];
 
         private void Start()
         {
             if (switchMode != SwitcherMode.Back && switchMode != SwitcherMode.None)
-                showMethodInfo = typeof(ViewManager).GetMethod(nameof(ViewManager.Show), 1, new[] { typeof(bool) })
+            {
+                showMethodInfo = typeof(UIManager).GetMethod(nameof(UIManager.Show), 1, new[] { typeof(bool) })
                     ?.MakeGenericMethod(targetView);
+            }
         }
 
 #if UNITY_EDITOR
         protected override void OnValidate()
         {
             base.OnValidate();
-            if (switchMode == SwitcherMode.Back || switchMode == SwitcherMode.None) targetView = null;
+
+            if (switchMode == SwitcherMode.Back || switchMode == SwitcherMode.None)
+            {
+                targetView = null;
+            }
         }
 #endif
 
@@ -41,15 +47,15 @@ namespace DeepDreams.UI
                 case SwitcherMode.None:
                     break;
                 case SwitcherMode.Back:
-                    ViewManager.instance.Back();
+                    UIManager.instance.Back();
                     break;
                 case SwitcherMode.Replace:
                     showMethodParameters[0] = false;
-                    showMethodInfo.Invoke(ViewManager.instance, showMethodParameters);
+                    showMethodInfo.Invoke(UIManager.instance, showMethodParameters);
                     break;
                 case SwitcherMode.Add:
                     showMethodParameters[0] = true;
-                    showMethodInfo.Invoke(ViewManager.instance, showMethodParameters);
+                    showMethodInfo.Invoke(UIManager.instance, showMethodParameters);
                     break;
             }
         }
