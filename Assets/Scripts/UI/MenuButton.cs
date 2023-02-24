@@ -34,6 +34,7 @@ namespace DeepDreams.UI
 
         [Separator("General")]
         [OverrideLabel("Interactable")] public bool isEnabled = true;
+        [OverrideLabel("Clickable")] public bool isClickable = true;
         [OverrideLabel("Toggleable")] public bool isToggleable;
 
         public Graphic targetGraphic;
@@ -46,10 +47,11 @@ namespace DeepDreams.UI
 
         [Separator("Audio Overrides")]
         [SerializeField] private bool playHoverAudio = true;
-        [SerializeField] private bool playClickAudio = true;
+        [ReadOnly(nameof(isClickable), false, false)] [SerializeField] private bool playClickAudio = true;
 
         [OverrideLabel("Hover Audio")] [SerializeField] private AudioReference uiAudioHoverOverride;
-        [OverrideLabel("Click Audio")] [SerializeField] private AudioReference uiAudioClickOverride;
+        [ReadOnly(nameof(isClickable), false, false)] [OverrideLabel("Click Audio")]
+        [SerializeField] private AudioReference uiAudioClickOverride;
 
         private ButtonStatus _buttonStatus = ButtonStatus.Normal;
         private bool _isHighlighted;
@@ -81,7 +83,7 @@ namespace DeepDreams.UI
 
         public virtual void OnPointerClick(PointerEventData eventData)
         {
-            if (!isEnabled)
+            if (!isEnabled || !isClickable)
             {
                 return;
             }
@@ -116,7 +118,7 @@ namespace DeepDreams.UI
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            if (!isEnabled)
+            if (!isEnabled || !isClickable)
             {
                 return;
             }
