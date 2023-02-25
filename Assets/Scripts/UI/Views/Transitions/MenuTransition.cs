@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 
-namespace DeepDreams.UI
+namespace DeepDreams.UI.Views.Transitions
 {
     [Serializable]
     public abstract class MenuTransition

@@ -1,18 +1,18 @@
 ﻿using System.Collections;
+using DeepDreams.UI.Views.Transitions;
 using UnityEngine;
 
-namespace DeepDreams.UI
+namespace DeepDreams.UI.Views
 {
     [RequireComponent(typeof(CanvasGroup))]
     public class View : MonoBehaviour
     {
-        public CanvasGroup CanvasGroup { get; private set; }
+        [SerializeField] private MenuTransitionFactory menuTransitionFactory;
+        protected Coroutine _coroutine;
 
         protected bool _isActive;
-
-        [SerializeField] private MenuTransitionFactory menuTransitionFactory;
         private MenuTransition _menuTransition;
-        protected Coroutine _coroutine;
+        public CanvasGroup CanvasGroup { get; private set; }
 
         public virtual void Initialize()
         {
@@ -28,15 +28,26 @@ namespace DeepDreams.UI
             _isActive = true;
             gameObject.SetActive(_isActive);
 
-            if (_coroutine != null) StopCoroutine(_coroutine);
+            if (_coroutine != null)
+            {
+                StopCoroutine(_coroutine);
+            }
+
             _coroutine = StartCoroutine(Show());
         }
 
         public virtual void Close()
         {
-            if (!_isActive) return;
+            if (!_isActive)
+            {
+                return;
+            }
 
-            if (_coroutine != null) StopCoroutine(_coroutine);
+            if (_coroutine != null)
+            {
+                StopCoroutine(_coroutine);
+            }
+
             _coroutine = StartCoroutine(Hide());
         }
 

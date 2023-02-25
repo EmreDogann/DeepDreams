@@ -209,7 +209,7 @@ MonoBehaviour:
   m_MinHeight: -1
   m_PreferredWidth: -1
   m_PreferredHeight: -1
-  m_FlexibleWidth: 0.1
+  m_FlexibleWidth: 0.2
   m_FlexibleHeight: 1
   m_LayoutPriority: 1
 --- !u!222 &4904350042692714745
@@ -401,7 +401,7 @@ MonoBehaviour:
   m_MinHeight: -1
   m_PreferredWidth: -1
   m_PreferredHeight: -1
-  m_FlexibleWidth: 0.1
+  m_FlexibleWidth: 0.2
   m_FlexibleHeight: 1
   m_LayoutPriority: 1
 --- !u!222 &145828163453866024
@@ -619,7 +619,7 @@ MonoBehaviour:
   m_MinHeight: -1
   m_PreferredWidth: -1
   m_PreferredHeight: -1
-  m_FlexibleWidth: 2
+  m_FlexibleWidth: 1.5
   m_FlexibleHeight: 1
   m_LayoutPriority: 1
 --- !u!1 &8382332001816097622

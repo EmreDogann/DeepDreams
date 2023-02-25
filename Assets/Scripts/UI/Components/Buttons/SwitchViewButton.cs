@@ -1,16 +1,18 @@
 ﻿using System.Reflection;
+using DeepDreams.UI.Views;
 using MyBox;
 using TypeReferences;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace DeepDreams.UI
+namespace DeepDreams.UI.Components.Buttons
 {
     public class SwitchViewButton : MenuButton
     {
         [Separator("Switch View")]
         [SerializeField] private SwitcherMode switchMode;
 
+        [ReadOnly(nameof(switchMode), false, SwitcherMode.Back, SwitcherMode.None)]
         [Inherits(typeof(View), ShowNoneElement = false, Grouping = Grouping.None, ShortName = true)]
         [SerializeField] private TypeReference targetView;
         private readonly object[] showMethodParameters = new object[1];
@@ -31,10 +33,7 @@ namespace DeepDreams.UI
         {
             base.OnValidate();
 
-            if (switchMode == SwitcherMode.Back || switchMode == SwitcherMode.None)
-            {
-                targetView = null;
-            }
+            if (switchMode == SwitcherMode.Back || switchMode == SwitcherMode.None) targetView = null;
         }
 #endif
 

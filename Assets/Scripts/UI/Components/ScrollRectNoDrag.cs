@@ -1,7 +1,7 @@
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace DeepDreams.UI
+namespace DeepDreams.UI.Components
 {
     public class ScrollRectNoDrag : ScrollRect
     {

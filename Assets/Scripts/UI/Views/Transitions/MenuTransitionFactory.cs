@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace DeepDreams.UI
+namespace DeepDreams.UI.Views.Transitions
 {
     [Serializable]
     public class MenuTransitionFactory

@@ -3,16 +3,16 @@ using System.Collections;
 using DeepDreams.Utils;
 using UnityEngine;
 
-namespace DeepDreams.UI
+namespace DeepDreams.UI.Views.Transitions
 {
     [Serializable]
     public class FadeMenuTransition : MenuTransition
     {
-        private CanvasGroup _canvasGroup;
         [SerializeField] private float openDuration = 0.1f;
         [SerializeField] private float closeDuration = 0.1f;
         [SerializeField] private Easing openEasing = Easing.Linear;
         [SerializeField] private Easing closeEasing = Easing.Linear;
+        private CanvasGroup _canvasGroup;
 
         public override void Initialize(View view)
         {

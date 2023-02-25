@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace DeepDreams.UI
+namespace DeepDreams.UI.Components.Buttons
 {
     public class ExitButton : MenuButton
     {

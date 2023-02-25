@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Reflection;
+using DeepDreams.UI.Views;
+using DeepDreams.UI.Views.Transitions;
 using UnityEditor;
+using UnityEngine;
 
 namespace DeepDreams.UI.Editor
 {
@@ -30,7 +33,15 @@ namespace DeepDreams.UI.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            DrawPropertiesExcluding(serializedObject, factoryFieldInfo.Name);
+
+            using (new EditorGUI.DisabledScope(true))
+            {
+                EditorGUILayout.ObjectField("Script", MonoScript.FromMonoBehaviour((MonoBehaviour)target), GetType(), false);
+            }
+
+            EditorGUILayout.Space(16);
+
+            DrawPropertiesExcluding(serializedObject, "m_Script", factoryFieldInfo.Name);
             DrawMenuTransition();
             serializedObject.ApplyModifiedProperties();
         }

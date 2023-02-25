@@ -15,7 +15,18 @@ namespace DeepDreams.UI
     [CustomEditor(typeof(Touchable))]
     public class TouchableEditor : Editor
     {
-        public override void OnInspectorGUI() {}
+        private SerializedProperty _raycastTargetBool;
+
+        private void OnEnable()
+        {
+            _raycastTargetBool = serializedObject.FindProperty("m_RaycastTarget");
+        }
+
+        public override void OnInspectorGUI()
+        {
+            EditorGUILayout.PropertyField(_raycastTargetBool);
+            serializedObject.ApplyModifiedProperties();
+        }
     }
 #endif
     [RequireComponent(typeof(CanvasRenderer))]

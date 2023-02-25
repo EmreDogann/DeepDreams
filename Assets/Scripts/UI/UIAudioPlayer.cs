@@ -1,6 +1,7 @@
 ﻿using DeepDreams.Audio;
 using DeepDreams.ScriptableObjects.Audio;
 using DeepDreams.ScriptableObjects.Events;
+using DeepDreams.UI.Components.Buttons;
 using MyBox;
 using UnityEngine;
 
@@ -16,7 +17,6 @@ namespace DeepDreams.UI
         [SerializeField] private AudioReference hoverAudio;
         [SerializeField] private AudioReference backAudio;
         [SerializeField] private AudioReference pauseAudio;
-        [SerializeField] private AudioReference startGameAudio;
 
         private BoolEventListener _onGamePausedEvent;
 
@@ -43,10 +43,7 @@ namespace DeepDreams.UI
 
         private void OnCancel(bool isPaused)
         {
-            if (isPaused)
-            {
-                AudioManager.instance.PlayOneShot(backAudio);
-            }
+            if (isPaused) AudioManager.instance.PlayOneShot(backAudio);
         }
 
         private void OnGamePaused(bool isPaused)
@@ -58,33 +55,15 @@ namespace DeepDreams.UI
             }
         }
 
-        private void OnUIHover(AudioReference audioReference)
+        private void OnUIHover()
         {
-            AudioReference audio = audioReference == null ? hoverAudio : audioReference;
+            AudioReference audio = hoverAudio;
             AudioManager.instance.PlayOneShot(audio);
         }
 
-        private void OnUIClick(AudioReference audioReference)
+        private void OnUIClick()
         {
-            AudioReference audio = audioReference == null ? clickAudio : audioReference;
-            AudioManager.instance.PlayOneShot(audio);
-        }
-
-        private void OnUIBack(AudioReference audioReference)
-        {
-            AudioReference audio = audioReference == null ? backAudio : audioReference;
-            AudioManager.instance.PlayOneShot(audio);
-        }
-
-        private void OnUIPause(AudioReference audioReference)
-        {
-            AudioReference audio = audioReference == null ? pauseAudio : audioReference;
-            AudioManager.instance.PlayOneShot(audio);
-        }
-
-        private void OnUIStartGame(AudioReference audioReference)
-        {
-            AudioReference audio = audioReference == null ? startGameAudio : audioReference;
+            AudioReference audio = clickAudio;
             AudioManager.instance.PlayOneShot(audio);
         }
     }

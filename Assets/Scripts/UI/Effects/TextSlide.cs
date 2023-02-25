@@ -1,10 +1,9 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace DeepDreams.UI.Effects
 {
-    public class TextSlide : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class TextSlide : MonoBehaviour, IButtonEffect
     {
         [Range(0.0f, 3.0f)] [SerializeField] private float slideTime = 0.05f;
         private Vector3 _posVelocity;
@@ -24,20 +23,35 @@ namespace DeepDreams.UI.Effects
         // Update is called once per frame
         private void Update()
         {
-            // if (_textMesh.transform.localPosition.sqrMagnitude - _targetPos.sqrMagnitude < 0.0001f) return;
             _textMesh.transform.localPosition =
                 Vector3.SmoothDamp(_textMesh.transform.localPosition, _targetPos, ref _posVelocity, slideTime, Mathf.Infinity,
                     Time.unscaledDeltaTime);
         }
 
-        public void OnPointerEnter(PointerEventData eventData)
+        private void Activate()
         {
             _targetPos = _startPos + new Vector2(20.0f, 0.0f);
         }
 
-        public void OnPointerExit(PointerEventData eventData)
+        private void Deactivate()
         {
             _targetPos = _startPos;
+        }
+
+        public void OnHoverEnter()
+        {
+            Activate();
+        }
+
+        public void OnHoverExit()
+        {
+            Deactivate();
+        }
+
+        public void OnToggle(bool isSelected)
+        {
+            if (isSelected) Activate();
+            else Deactivate();
         }
     }
 }

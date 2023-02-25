@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using DeepDreams.ScriptableObjects.Events;
 using UnityEngine;
 
-namespace DeepDreams.UI
+namespace DeepDreams.UI.Views
 {
     public class UIManager : MonoBehaviour
     {

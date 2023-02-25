@@ -3,7 +3,7 @@ using DeepDreams.ScriptableObjects.Audio;
 using TMPro;
 using UnityEngine;
 
-namespace DeepDreams.UI
+namespace DeepDreams.UI.Components
 {
     public class AudioSlider : MonoBehaviour
     {
