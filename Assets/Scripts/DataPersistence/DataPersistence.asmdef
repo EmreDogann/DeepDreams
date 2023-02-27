@@ -1,10 +1,12 @@
 {
-    "name": "Utils",
+    "name": "DataPersistence",
     "rootNamespace": "DeepDreams",
-    "references": [],
+    "references": [
+        "GUID:d01ac35803f63d645b41478698df3bd2"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": true,
+    "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,

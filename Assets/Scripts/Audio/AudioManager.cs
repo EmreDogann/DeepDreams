@@ -15,10 +15,7 @@ namespace DeepDreams.Audio
 
         private void Awake()
         {
-            if (instance != null)
-            {
-                Debug.LogError("Found more than one Audio Manager in the scene.");
-            }
+            if (instance != null) Debug.LogError("Found more than one Audio Manager in the scene.");
 
             instance = this;
 
@@ -41,16 +38,16 @@ namespace DeepDreams.Audio
             _audioBuses[bus].setVolume(volume);
         }
 
+        public float GetVolume(BusReference bus)
+        {
+            _audioBuses[bus].getVolume(out float volume);
+            return volume;
+        }
+
         public void StopAllEvents(BusReference bus, bool immediate)
         {
-            if (immediate)
-            {
-                _audioBuses[bus].stopAllEvents(STOP_MODE.IMMEDIATE);
-            }
-            else
-            {
-                _audioBuses[bus].stopAllEvents(STOP_MODE.ALLOWFADEOUT);
-            }
+            if (immediate) _audioBuses[bus].stopAllEvents(STOP_MODE.IMMEDIATE);
+            else _audioBuses[bus].stopAllEvents(STOP_MODE.ALLOWFADEOUT);
         }
 
         public void Pause(BusReference bus, bool paused)

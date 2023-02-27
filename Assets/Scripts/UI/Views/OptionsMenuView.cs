@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using DeepDreams.Audio;
+using DeepDreams.DataPersistence;
+using DeepDreams.DataPersistence.Data;
 using DeepDreams.ScriptableObjects.Audio;
 using DeepDreams.UI.Components.Buttons;
 using UnityEngine;
@@ -137,6 +140,12 @@ namespace DeepDreams.UI.Views
         {
             AudioManager.instance.PlayOneShot(activationSound);
             CategoryClicked(_currentActiveCategory.Value.From);
+        }
+
+        protected override IEnumerator Hide()
+        {
+            DataPersistenceManager.instance.SaveData<SettingsData>();
+            yield return base.Hide();
         }
     }
 }

@@ -2,7 +2,8 @@
     "name": "UI.Editor",
     "rootNamespace": "DeepDreams",
     "references": [
-        "GUID:ff488248f5d1c3745ab1e3b74620eae6"
+        "GUID:ff488248f5d1c3745ab1e3b74620eae6",
+        "GUID:d01ac35803f63d645b41478698df3bd2"
     ],
     "includePlatforms": [
         "Editor"

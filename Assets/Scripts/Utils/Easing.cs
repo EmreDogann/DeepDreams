@@ -3,6 +3,8 @@ using UnityEngine;
 
 namespace DeepDreams.Utils
 {
+    // From: https://github.com/peartreegames/evt-menus/blob/main/Runtime/Transitions/Easing.cs
+    // Based on easings.net: https://github.com/ai/easings.net
     public enum Easing
     {
         Linear,
