@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+﻿using System;
 using DeepDreams.UI.Views;
 using MyBox;
 using TypeReferences;
@@ -15,17 +15,13 @@ namespace DeepDreams.UI.Components.Buttons
         [ReadOnly(nameof(switchMode), false, SwitcherMode.Back, SwitcherMode.None)]
         [Inherits(typeof(View), ShowNoneElement = false, Grouping = Grouping.None, ShortName = true)]
         [SerializeField] private TypeReference targetView;
-        private readonly object[] showMethodParameters = new object[1];
 
-        private MethodInfo showMethodInfo;
+        private Action<UIManager, bool> _showMethodAction;
 
         private void Start()
         {
             if (switchMode != SwitcherMode.Back && switchMode != SwitcherMode.None)
-            {
-                showMethodInfo = typeof(UIManager).GetMethod(nameof(UIManager.Show), 1, new[] { typeof(bool) })
-                    ?.MakeGenericMethod(targetView);
-            }
+                _showMethodAction = UIManager.instance.GetCachedMethod(targetView);
         }
 
 #if UNITY_EDITOR
@@ -49,12 +45,10 @@ namespace DeepDreams.UI.Components.Buttons
                     UIManager.instance.Back();
                     break;
                 case SwitcherMode.Replace:
-                    showMethodParameters[0] = false;
-                    showMethodInfo.Invoke(UIManager.instance, showMethodParameters);
+                    _showMethodAction(UIManager.instance, false);
                     break;
                 case SwitcherMode.Add:
-                    showMethodParameters[0] = true;
-                    showMethodInfo.Invoke(UIManager.instance, showMethodParameters);
+                    _showMethodAction(UIManager.instance, true);
                     break;
             }
         }

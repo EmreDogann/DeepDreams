@@ -18,7 +18,7 @@ namespace DeepDreams.UI.Components
         [SerializeField] private bool persistData;
 
         [SerializeField] private DataPersistenceFieldReference<SettingsData> selectedDataField;
-        private FieldAccessor dataFieldAccessor;
+        private FieldAccessor _dataFieldAccessor;
 
         public void SetSliderValue(float sliderValue)
         {
@@ -35,7 +35,7 @@ namespace DeepDreams.UI.Components
         public void InitDataPersistence()
         {
             if (!persistData) return;
-            dataFieldAccessor = DataPersistenceManager.instance.GetFieldAccessor<SettingsData>(selectedDataField.selectedName);
+            _dataFieldAccessor = DataPersistenceManager.instance.GetFieldAccessor<SettingsData>(selectedDataField.selectedName);
         }
 
         public void LoadData(PersistentData persistentData)
@@ -43,7 +43,7 @@ namespace DeepDreams.UI.Components
             if (!persistData) return;
 
             SettingsData settingsData = (SettingsData)persistentData;
-            SetVolume((float)dataFieldAccessor.Get(settingsData) * 100.0f);
+            SetVolume((float)_dataFieldAccessor.Get(settingsData) * 100.0f);
 
             // Debug.Log($"Loaded {selectedDataField.selectedName}: {(float)dataFieldAccessor.Get(settingsData) * 100.0f}");
         }
@@ -53,7 +53,7 @@ namespace DeepDreams.UI.Components
             if (!persistData) return;
 
             SettingsData settingsData = (SettingsData)persistentData;
-            dataFieldAccessor.Set(settingsData, AudioManager.instance.GetVolume(bus));
+            _dataFieldAccessor.Set(settingsData, AudioManager.instance.GetVolume(bus));
 
             // Debug.Log($"Saving {selectedDataField.selectedName}: {dataFieldAccessor.Get(settingsData)}");
         }

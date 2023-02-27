@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using DeepDreams.ScriptableObjects.Events;
 using UnityEngine;
 
@@ -16,6 +17,7 @@ namespace DeepDreams.UI.Views
 
         private View _currentView;
         private View[] _views;
+        private readonly Dictionary<string, Action<UIManager, bool>> cachedMethods = new Dictionary<string, Action<UIManager, bool>>();
 
         public Action<bool> OnGamePause;
         public static UIManager instance { get; private set; }
@@ -46,10 +48,7 @@ namespace DeepDreams.UI.Views
                 Show(startingView);
                 ShowCursor();
             }
-            else
-            {
-                instance.inGameView.Open();
-            }
+            else instance.inGameView.Open();
         }
 
         private void ShowCursor()
@@ -74,14 +73,24 @@ namespace DeepDreams.UI.Views
             return instance._currentView;
         }
 
+        public Action<UIManager, bool> GetCachedMethod(Type type)
+        {
+            if (cachedMethods.ContainsKey(type.Name)) return cachedMethods[type.Name];
+
+            MethodInfo showMethodInfo = typeof(UIManager).GetMethod(nameof(Show), 1, new[] { typeof(bool) })
+                ?.MakeGenericMethod(type);
+
+            var showFunc = (Action<UIManager, bool>)Delegate.CreateDelegate(typeof(Action<UIManager, bool>), showMethodInfo);
+
+            cachedMethods.Add(type.Name, showFunc);
+            return showFunc;
+        }
+
         public T GetView<T>() where T : View
         {
             for (int i = 0; i < instance._views.Length; i++)
             {
-                if (instance._views[i] is T tView)
-                {
-                    return tView;
-                }
+                if (instance._views[i] is T tView) return tView;
             }
 
             return null;
@@ -92,17 +101,11 @@ namespace DeepDreams.UI.Views
         {
             for (int i = 0; i < instance._views.Length; i++)
             {
-                if (instance._views[i] is not T)
-                {
-                    continue;
-                }
+                if (instance._views[i] is not T) continue;
 
                 if (instance._currentView != null)
                 {
-                    if (remember)
-                    {
-                        instance._history.Push(instance._currentView);
-                    }
+                    if (remember) instance._history.Push(instance._currentView);
 
                     instance._currentView.Close();
                 }
@@ -125,10 +128,7 @@ namespace DeepDreams.UI.Views
         {
             if (instance._currentView != null)
             {
-                if (remember)
-                {
-                    instance._history.Push(instance._currentView);
-                }
+                if (remember) instance._history.Push(instance._currentView);
 
                 instance._currentView.Close();
             }

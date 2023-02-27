@@ -5,6 +5,7 @@ using DeepDreams.Audio;
 using DeepDreams.DataPersistence;
 using DeepDreams.DataPersistence.Data;
 using DeepDreams.ScriptableObjects.Audio;
+using DeepDreams.UI.Components;
 using DeepDreams.UI.Components.Buttons;
 using UnityEngine;
 
@@ -39,6 +40,8 @@ namespace DeepDreams.UI.Views
 
         [SerializeField] private AudioReference activationSound;
         [SerializeField] private AudioReference deactivationSound;
+
+        [SerializeField] private ScrollRectNoDrag scrollRect;
 
         private OptionsViewLink? _currentActiveCategory;
         private bool _isFirstTime = true;
@@ -108,6 +111,8 @@ namespace DeepDreams.UI.Views
                     optionsViewLinks[i].SetVisible(false);
                 }
             }
+
+            scrollRect.OnCategoryChanged();
         }
 
         public void CategoryClicked(OptionsCategoryButton categoryButton)
