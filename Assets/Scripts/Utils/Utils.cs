@@ -66,6 +66,11 @@ namespace DeepDreams.Utils
             pobj += IntPtr.Size + GetFieldOffset(fi.FieldHandle);
             return ref Unsafe.AsRef<U>(pobj.ToPointer());
         }
+
+        public static Guid GenerateGuid()
+        {
+            return Guid.NewGuid();
+        }
     }
 
     // From: https://stackoverflow.com/questions/38528620/c-sharp-fieldinfo-reflection-alternatives

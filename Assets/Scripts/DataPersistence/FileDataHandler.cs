@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -7,35 +8,56 @@ namespace DeepDreams.DataPersistence
 {
     public class FileDataHandler
     {
-        private readonly string _dataDirPath;
-        private readonly string _dataFileName;
-        private readonly string _fullPath;
-
-        private readonly bool _useEncryption;
-        private readonly string _encryptionCodeword;
-
-        public FileDataHandler(string dataDirPath, string dataFileName, bool useEncryption)
+        private struct FileInfo
         {
-            _dataDirPath = dataDirPath;
-            _dataFileName = dataFileName;
-            _useEncryption = useEncryption;
-            _encryptionCodeword = "d*5Q4Qc@G^w5";
+            public readonly string dataDirPath;
+            public readonly string dataFileName;
+            public readonly string fullPath;
+            public readonly bool useEncryption;
 
-            _fullPath = Path.Combine(_dataDirPath, _dataFileName);
-            ;
+            public FileInfo(string dataDirPath, string dataFileName, string fullPath, bool useEncryption)
+            {
+                this.dataDirPath = dataDirPath;
+                this.dataFileName = dataFileName;
+                this.fullPath = fullPath;
+                this.useEncryption = useEncryption;
+            }
         }
 
-        public T Load<T>()
+        private readonly Dictionary<string, FileInfo> _fileDictionary;
+
+        private readonly string _encryptionCodeword;
+
+        public FileDataHandler()
         {
+            _fileDictionary = new Dictionary<string, FileInfo>();
+            _encryptionCodeword = "d*5Q4Qc@G^w5";
+        }
+
+        public void AddFile(string dataDirPath, string dataFileName, bool useEncryption, string dataObjectId)
+        {
+            if (_fileDictionary.ContainsKey(dataObjectId))
+            {
+                Debug.LogWarning($"Persistent Data File Handler: File {dataFileName} is already being used.");
+                return;
+            }
+
+            FileInfo fileInfo = new FileInfo(dataDirPath, dataFileName, Path.Combine(dataDirPath, dataFileName), useEncryption);
+            _fileDictionary.Add(dataObjectId, fileInfo);
+        }
+
+        public T Load<T>(string dataObjectId)
+        {
+            FileInfo fileInfo = _fileDictionary[dataObjectId];
             T loadedData = default;
 
-            if (File.Exists(_fullPath))
+            if (File.Exists(fileInfo.fullPath))
             {
                 try
                 {
                     string dataToLoad = "";
 
-                    using (FileStream stream = new FileStream(_fullPath, FileMode.Open))
+                    using (FileStream stream = new FileStream(fileInfo.fullPath, FileMode.Open))
                     {
                         using (StreamReader reader = new StreamReader(stream))
                         {
@@ -43,30 +65,32 @@ namespace DeepDreams.DataPersistence
                         }
                     }
 
-                    if (_useEncryption) dataToLoad = EncryptDecrypt(dataToLoad);
+                    if (fileInfo.useEncryption) dataToLoad = EncryptDecrypt(dataToLoad);
 
                     loadedData = JsonConvert.DeserializeObject<T>(dataToLoad);
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"Error occured when trying to save data to file: {_fullPath}\n{e}");
+                    Debug.LogError($"Error occured when trying to save data to file: {fileInfo.fullPath}\n{e}");
                 }
             }
 
             return loadedData;
         }
 
-        public void Save<T>(T data)
+        public void Save(PersistentDataObject data)
         {
+            FileInfo fileInfo = _fileDictionary[data.id];
+
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(_fullPath));
+                Directory.CreateDirectory(Path.GetDirectoryName(fileInfo.fullPath));
 
-                string dataToStore = JsonConvert.SerializeObject(data, Formatting.Indented);
+                string dataToStore = JsonConvert.SerializeObject(data.persistentData, Formatting.Indented);
 
-                if (_useEncryption) dataToStore = EncryptDecrypt(dataToStore);
+                if (fileInfo.useEncryption) dataToStore = EncryptDecrypt(dataToStore);
 
-                using (FileStream stream = new FileStream(_fullPath, FileMode.Create))
+                using (FileStream stream = new FileStream(fileInfo.fullPath, FileMode.Create))
                 {
                     using (StreamWriter writer = new StreamWriter(stream))
                     {
@@ -76,7 +100,7 @@ namespace DeepDreams.DataPersistence
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error occured when trying to save data to file: {_fullPath}\n{e}");
+                Debug.LogError($"Error occured when trying to save data to file: {fileInfo.fullPath}\n{e}");
             }
         }
 

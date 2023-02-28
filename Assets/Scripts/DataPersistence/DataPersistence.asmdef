@@ -2,7 +2,9 @@
     "name": "DataPersistence",
     "rootNamespace": "DeepDreams",
     "references": [
-        "GUID:d01ac35803f63d645b41478698df3bd2"
+        "GUID:d01ac35803f63d645b41478698df3bd2",
+        "GUID:48c9f6afdac61634db0e0f241c7d4d51",
+        "GUID:ea6a6314f279f814facc8c48a7d3c9f1"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

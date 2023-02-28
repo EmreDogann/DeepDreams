@@ -1,23 +1,41 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using DeepDreams.DataPersistence.Data;
 using DeepDreams.Utils;
+using TypeReferences;
 using UnityEngine;
 
 namespace DeepDreams.DataPersistence
 {
+    public class PersistentDataObject
+    {
+        public readonly string id;
+        public PersistentData persistentData;
+
+        public PersistentDataObject(string newId = null)
+        {
+            id = string.IsNullOrEmpty(newId) ? UtilHelpers.GenerateGuid().ToString() : newId;
+        }
+    }
     public class DataPersistenceManager : MonoBehaviour
     {
-        [Header("File Storage Config")]
-        [SerializeField] private string fileName;
-        [SerializeField] private bool useEncryption;
+        [Serializable]
+        private class PersistentDataDescriptor
+        {
+            public string fileName;
+            [Inherits(typeof(PersistentData), ShowNoneElement = false, Grouping = Grouping.None, ShortName = true)]
+            public TypeReference dataType;
+            public bool useEncryption;
+        }
+
+        [SerializeField] private List<PersistentDataDescriptor> persistentDataObjectDescriptors;
 
         public static DataPersistenceManager instance { get; private set; }
         private FileDataHandler _fileDataHandler;
 
-        private List<PersistentData> _persistentDataObjects;
+        private List<PersistentDataObject> _dataObjects;
         private List<IDataPersistence<PersistentData>> _dataPersistenceCallers;
-        // private Dictionary<PersistentData, List<IDataPersistence<PersistentData>>>
         private Dictionary<string, FieldAccessor> _fieldAccessors;
 
         private void Awake()
@@ -26,17 +44,28 @@ namespace DeepDreams.DataPersistence
 
             instance = this;
 
-            _fieldAccessors = new Dictionary<string, FieldAccessor>();
+            _dataObjects = new List<PersistentDataObject>();
+            _fileDataHandler = new FileDataHandler();
 
-            _persistentDataObjects = new List<PersistentData>();
-            _persistentDataObjects.Add(new GameData());
-            _persistentDataObjects.Add(new SettingsData());
+            persistentDataObjectDescriptors = persistentDataObjectDescriptors
+                .GroupBy(x => x.dataType)
+                .Select(y => y.First())
+                .ToList();
+
+            foreach (PersistentDataDescriptor descriptor in persistentDataObjectDescriptors)
+            {
+                PersistentDataObject dataObject = new PersistentDataObject();
+                dataObject.persistentData = (PersistentData)Activator.CreateInstance(descriptor.dataType);
+
+                _dataObjects.Add(dataObject);
+                _fileDataHandler.AddFile(Application.persistentDataPath, descriptor.fileName, descriptor.useEncryption, dataObject.id);
+            }
+
+            _fieldAccessors = new Dictionary<string, FieldAccessor>();
         }
 
         private void Start()
         {
-            _fileDataHandler = new FileDataHandler(Application.persistentDataPath, fileName, useEncryption);
-
             _dataPersistenceCallers = FindAllDataPersistenceCallers();
             InitializeAllDataPersistenceCallers();
 
@@ -45,14 +74,10 @@ namespace DeepDreams.DataPersistence
 
         private void InitializeAllDataPersistenceCallers()
         {
-            // float startTime = Time.realtimeSinceStartup;
-
             for (int i = 0; i < _dataPersistenceCallers.Count; i++)
             {
                 _dataPersistenceCallers[i].InitDataPersistence();
             }
-
-            // Debug.Log($"Time elapsed: {Time.realtimeSinceStartup - startTime}");
         }
 
         public FieldAccessor GetFieldAccessor<T>(string key)
@@ -64,38 +89,37 @@ namespace DeepDreams.DataPersistence
 
         public void SaveData<T>() where T : PersistentData, new()
         {
-            T dataObject = _persistentDataObjects.OfType<T>().FirstOrDefault();
+            PersistentDataObject dataObject = _dataObjects.FirstOrDefault(p => p.persistentData.GetType() == typeof(T));
 
-            if (dataObject == null)
-                Debug.LogError($"Data Persistence Saving Error: No data object of type {typeof(T).Name} was found. Using defaults.");
+            if (dataObject.persistentData == null)
+                Debug.LogError($"Data Persistence Saving Error: No data object of type <color=red>{typeof(T).Name}</color> was found.");
 
             foreach (var persistenceObject in _dataPersistenceCallers.OfType<IDataPersistence<T>>())
-                // Debug.Log("Saving: " + persistenceObject.GetType().FullName);
-                persistenceObject.SaveData(dataObject);
+                persistenceObject.SaveData(dataObject.persistentData);
 
             _fileDataHandler.Save(dataObject);
         }
 
         public void LoadData<T>() where T : PersistentData, new()
         {
-            int dataObjectIndex = _persistentDataObjects.FindIndex(data => data.GetType() == typeof(T));
+            int dataObjectIndex = _dataObjects.FindIndex(data => data.persistentData.GetType() == typeof(T));
 
             if (dataObjectIndex == -1)
             {
-                Debug.LogError($"Data Persistence Loading Error: No data object of type {typeof(T).Name} was found. Creating default one.");
-                _persistentDataObjects.Add(new T());
-                dataObjectIndex = _persistentDataObjects.Count() - 1;
+                Debug.LogError($"Data Persistence Loading Error: No data object of type <color=red>{typeof(T).Name}</color> was found.");
+                return;
             }
 
-            T dataObject = _fileDataHandler.Load<T>();
+            T dataObject = _fileDataHandler.Load<T>(_dataObjects[dataObjectIndex].id);
 
-            if (dataObject == null) Debug.LogWarning($"No file representing type {typeof(T).Name} was found. Using defaults.");
-            else _persistentDataObjects[dataObjectIndex] = dataObject;
+            PersistentDataObject persistentDataObject = _dataObjects[dataObjectIndex];
+            if (dataObject == null)
+                Debug.LogWarning($"No file representing type <color=red>{typeof(T).Name}</color> was found. Using defaults.");
+            else persistentDataObject.persistentData = dataObject;
 
-            T dataObjectToSend = (T)_persistentDataObjects[dataObjectIndex];
+            T dataObjectToSend = (T)persistentDataObject.persistentData;
 
             foreach (var persistenceObject in _dataPersistenceCallers.OfType<IDataPersistence<T>>())
-                // Debug.Log("Loading: " + persistenceObject.GetType().FullName);
                 persistenceObject.LoadData(dataObjectToSend);
         }
 
