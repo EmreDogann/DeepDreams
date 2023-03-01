@@ -172,6 +172,8 @@ MonoBehaviour:
   headBobSmoothing: 0.1
   camera: {fileID: 5904995484727186251}
   playerController: {fileID: 5440670880944876650}
+  footstepWalk: {fileID: 11400000, guid: cde037f37c5cf38488543562b852d62f, type: 2}
+  footstepRun: {fileID: 11400000, guid: f5bf924cc26d6bc4691c15fcb98800eb, type: 2}
   yMotion:
     serializedVersion: 2
     m_Curve:
