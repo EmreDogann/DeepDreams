@@ -18,4 +18,4 @@ MonoBehaviour:
       Data2: 1274472341
       Data3: -1503717221
       Data4: 1385297217
-    Path: event:/Player/FootstepWalk
+    Path: event:/Player/Footsteps/Wood/FootstepWalk

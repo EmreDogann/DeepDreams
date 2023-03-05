@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using DeepDreams.ScriptableObjects.Events;
+using DeepDreams.ScriptableObjects.Events.UnityEvents;
 using UnityEngine;
 
 namespace DeepDreams.UI.Views

@@ -1,4 +1,4 @@
-﻿using DeepDreams.Audio;
+﻿using DeepDreams.Player.StateMachine.Simple;
 using DeepDreams.ScriptableObjects.Audio;
 using MyBox;
 using UnityEngine;
@@ -13,7 +13,7 @@ namespace DeepDreams.Player.Camera
         [SerializeField] private float headBobSmoothing = 0.1f;
 
         [SerializeField] private Transform camera;
-        [SerializeField] private PlayerMotor playerController;
+        [SerializeField] private PlayerBlackboard blackboard;
 
         [Separator("Audio")]
         [SerializeField] private AudioReference footstepWalk;
@@ -65,10 +65,7 @@ namespace DeepDreams.Player.Camera
             _startPos = camera.localPosition;
             _startRot = camera.localRotation;
 
-            if (!enableDebugging)
-            {
-                return;
-            }
+            if (!enableDebugging) return;
 
             DebugGUI.SetGraphProperties("bobbingX", "X", -0.05f, 0.05f, 0, new Color(1, 0, 0), false);
             DebugGUI.SetGraphProperties("bobbingY", "Y", -0.05f, 0.05f, 0, new Color(0, 1, 0), false);
@@ -81,10 +78,7 @@ namespace DeepDreams.Player.Camera
 
         private void Update()
         {
-            if (!enable)
-            {
-                return;
-            }
+            if (!enable) return;
 
             if (enableDebugging)
             {
@@ -108,54 +102,38 @@ namespace DeepDreams.Player.Camera
 
         private void OnEnable()
         {
-            playerController.OnStride += OnStep;
+            blackboard.OnStride += OnStep;
         }
 
         private void OnDisable()
         {
-            playerController.OnStride -= OnStep;
+            blackboard.OnStride -= OnStep;
         }
 
         private bool IsMoving()
         {
-            return playerController.IsMoving && playerController.IsGrounded;
+            return blackboard.IsMoving && blackboard.IsGrounded;
         }
 
         private bool IsRunning()
         {
-            return playerController.IsRunning && !playerController.IsCrouching && playerController.IsMovingForward &&
-                   playerController.IsGrounded;
+            return blackboard.currentPlayerState == PlayerState.Running;
         }
 
         private float WrapAngle(float angle)
         {
             angle %= 360;
 
-            if (angle > 180)
-            {
-                return angle - 360;
-            }
+            if (angle > 180) return angle - 360;
 
             return angle;
         }
 
         private void OnStep()
         {
-            if (IsRunning())
-            {
-                AudioManager.instance.PlayOneShot(footstepRun);
-            }
-            else
-            {
-                AudioManager.instance.PlayOneShot(footstepWalk);
-            }
-
             _stepCount++;
 
-            if (!enableDebugging)
-            {
-                return;
-            }
+            if (!enableDebugging) return;
 
             _onStepCalled = true;
             DebugGUI.GraphEvent("bobbingXEvent", camera.localPosition.x);
@@ -174,14 +152,11 @@ namespace DeepDreams.Player.Camera
                 return;
             }
 
-            _walkingTime = playerController.StrideDistance / playerController.PlayerStride;
+            _walkingTime = blackboard.StrideDistance / blackboard.PlayerStride;
 
             camera.localPosition += FootStepMotion(_walkingTime);
 
-            if (enableStabilization)
-            {
-                camera.LookAt(camera.transform.position + camera.forward * stabilizationDistance);
-            }
+            if (enableStabilization) camera.LookAt(camera.transform.position + camera.forward * stabilizationDistance);
 
             camera.localRotation *= Quaternion.Euler(FootStepTilt(_walkingTime));
         }
@@ -192,10 +167,7 @@ namespace DeepDreams.Player.Camera
 
             _targetAmplitudeMultiplier = 1.0f;
 
-            if (IsRunning())
-            {
-                _targetAmplitudeMultiplier = motionRunMultiplier;
-            }
+            if (IsRunning()) _targetAmplitudeMultiplier = motionRunMultiplier;
 
             _motionAmplitudeMultiplier = Mathf.SmoothDamp(_motionAmplitudeMultiplier, _targetAmplitudeMultiplier,
                 ref _motionAmplitudeMultiplierVelocity, 0.1f);
@@ -221,10 +193,7 @@ namespace DeepDreams.Player.Camera
             }
             else
             {
-                if (IsMoving())
-                {
-                    _xTiltTarget = xTilt;
-                }
+                if (IsMoving()) _xTiltTarget = xTilt;
             }
 
             _tiltAmplitudeMultiplier = Mathf.SmoothDamp(_tiltAmplitudeMultiplier, _targetAmplitudeMultiplier,
@@ -239,15 +208,9 @@ namespace DeepDreams.Player.Camera
 
         private void ResetPosition()
         {
-            if ((camera.localPosition - _startPos).magnitude <= 0.00001f)
-            {
-                camera.localPosition = _startPos;
-            }
+            if ((camera.localPosition - _startPos).magnitude <= 0.00001f) camera.localPosition = _startPos;
 
-            if (camera.localPosition == _startPos && camera.localRotation == _startRot)
-            {
-                return;
-            }
+            if (camera.localPosition == _startPos && camera.localRotation == _startRot) return;
 
             camera.localPosition = Vector3.Lerp(camera.localPosition, _startPos, headBobSmoothing);
             camera.localRotation = Quaternion.Lerp(camera.localRotation, _startRot, headBobSmoothing);

@@ -384,6 +384,7 @@ MonoBehaviour:
   MasterBanks:
   - Master
   Banks:
+  - Ambience
   - SFX
   - UI
   BanksToLoad:
@@ -391,6 +392,7 @@ MonoBehaviour:
   - Master.strings
   - SFX
   - UI
+  - Ambience
   LiveUpdatePort: 9264
   EnableMemoryTracking: 0
   AndroidUseOBB: 0

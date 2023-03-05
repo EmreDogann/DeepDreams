@@ -1,4 +1,4 @@
-﻿using DeepDreams.ScriptableObjects.Events;
+﻿using DeepDreams.ScriptableObjects.Events.UnityEvents;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -14,7 +14,7 @@ namespace DeepDreams.Player
         [SerializeField] [Range(0.0f, 1.0f)] private float mouseDamping = 0.03f;
 
         [Space]
-        [SerializeField] private Transform camTransform;
+        [SerializeField] private Transform cameraHolder;
 
         private Vector2 _lookDirection;
         private Vector2 _currentMouseDelta;
@@ -48,7 +48,7 @@ namespace DeepDreams.Player
         private void CameraLook()
         {
             transform.localEulerAngles = Vector3.up * _lookDirection.y;
-            camTransform.localEulerAngles = Vector3.right * _lookDirection.x;
+            cameraHolder.localEulerAngles = Vector3.right * _lookDirection.x;
         }
 
         private void OnLook(InputValue value)

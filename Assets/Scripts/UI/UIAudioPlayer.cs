@@ -1,6 +1,6 @@
 ﻿using DeepDreams.Audio;
 using DeepDreams.ScriptableObjects.Audio;
-using DeepDreams.ScriptableObjects.Events;
+using DeepDreams.ScriptableObjects.Events.UnityEvents;
 using DeepDreams.UI.Components.Buttons;
 using MyBox;
 using UnityEngine;

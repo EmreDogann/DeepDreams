@@ -1,41 +1,33 @@
 ﻿using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace DeepDreams.Player
 {
-    [RequireComponent(typeof(PlayerMotor))]
+    [RequireComponent(typeof(PlayerBlackboard))]
     public class PlayerRunning : MonoBehaviour
     {
         [SerializeField] private float runSpeed = 6.0f;
         [SerializeField] private float runStride = 1.2f;
 
-        private PlayerMotor _playerController;
+        private PlayerBlackboard _blackboard;
 
-        private bool _isRunning;
-
-        private void Awake() {
-            _playerController = GetComponent<PlayerMotor>();
+        private void Awake()
+        {
+            _blackboard = GetComponent<PlayerBlackboard>();
+            _blackboard.OnPlayerRun += HandleSprint;
         }
 
-        private void OnEnable() {
-            _playerController.OnBeforeMove += HandleSprint;
+        private void OnDestroy()
+        {
+            _blackboard.OnPlayerRun -= HandleSprint;
         }
 
-        private void OnDisable() {
-            _playerController.OnBeforeMove -= HandleSprint;
-        }
-
-        private void HandleSprint() {
-            if (_isRunning && _playerController.IsMovingForward)
+        private void HandleSprint()
+        {
+            if (_blackboard.IsRunning && _blackboard.IsMovingForward)
             {
-                _playerController.MoveSpeed = runSpeed;
-                _playerController.PlayerStride = runStride;
+                _blackboard.MoveSpeed = runSpeed;
+                _blackboard.PlayerStride = runStride;
             }
-        }
-
-        private void OnRun(InputValue value) {
-            _isRunning = value.isPressed;
-            _playerController.IsRunning = _isRunning;
         }
     }
 }

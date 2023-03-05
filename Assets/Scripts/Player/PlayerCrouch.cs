@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using UnityEngine.InputSystem;
+﻿using System.Collections;
+using MyBox;
+using UnityEngine;
 
 namespace DeepDreams.Player
 {
-    [RequireComponent(typeof(PlayerMotor))]
+    [RequireComponent(typeof(PlayerBlackboard))]
     public class PlayerCrouch : MonoBehaviour
     {
         [SerializeField] private float crouchSpeed = 4.0f;
@@ -11,90 +12,116 @@ namespace DeepDreams.Player
         [SerializeField] private float crouchHeight = 1.0f;
         [SerializeField] private float crouchTransitionSpeed = 10.0f;
 
-        private PlayerMotor _playerController;
-        private LayerMask _layerMask;
-        private RaycastHit _hit;
-        private Vector3[] _rayOffsets;
+        [SerializeField] private Transform cameraHolder;
 
-        private bool IsCrouching => _standingHeight - _currentHeight > 0.01f;
-        private bool _isCrouchPressed;
-        private bool _isBlocked;
+        [Separator("Collision Settings")]
+        [SerializeField] private LayerMask collisionDetectionLayerMask;
+        [SerializeField] private float crouchCollisionRadius;
+        [SerializeField] private float collisionDetectionCooldown;
+
+        private PlayerBlackboard _blackboard;
+        private CharacterController _playerController;
+        private Coroutine _checkCollisionCoroutine;
+        private Coroutine _crouchCoroutine;
+        private WaitForSeconds _waitForSeconds;
+
+        private RaycastHit _hit;
+
+        private bool IsNotStanding => _standingHeight - _currentHeight > 0.01f;
 
         private float _standingHeight;
+        private float _heightTarget;
         private Vector3 _standingCenter;
         private float _currentHeight;
         private Vector3 _initialCameraPosition;
 
-        private void Awake() {
-            _playerController = GetComponent<PlayerMotor>();
-            _layerMask = LayerMask.GetMask("Environment");
+        private void Awake()
+        {
+            _blackboard = GetComponent<PlayerBlackboard>();
+            _playerController = _blackboard._Controller;
+
+            _blackboard.OnPlayerCrouch += HandleCrouch;
+
+            _waitForSeconds = new WaitForSeconds(collisionDetectionCooldown);
         }
 
-        private void Start() {
-            _initialCameraPosition = _playerController.camTransform.localPosition;
-            _standingHeight = _currentHeight = _playerController.Height;
-            _standingCenter = _playerController.Center;
-
-            _rayOffsets = new Vector3[5];
-            _rayOffsets[0] = new Vector3(0, 0, 0); // Center Ray
-
-            _rayOffsets[2] = new Vector3(_playerController.Radius * 0.75f, 0, 0); // Right Ray
-            _rayOffsets[1] = new Vector3(-_playerController.Radius * 0.75f, 0, 0); // Left Ray
-
-            _rayOffsets[3] = new Vector3(0, 0, _playerController.Radius * 0.75f); // Front Ray
-            _rayOffsets[4] = new Vector3(0, 0, -_playerController.Radius * 0.75f); // Back Ray
+        private void Start()
+        {
+            _initialCameraPosition = cameraHolder.localPosition;
+            _standingHeight = _currentHeight = _playerController.height;
+            _standingCenter = _playerController.center;
         }
 
-        private void OnEnable() {
-            _playerController.OnBeforeMove += HandleCrouch;
+        private void OnDestroy()
+        {
+            _blackboard.OnPlayerCrouch -= HandleCrouch;
         }
 
-
-        private void OnDisable() {
-            _playerController.OnBeforeMove -= HandleCrouch;
-        }
-
-        private void HandleCrouch() {
-            if (_isCrouchPressed || _isBlocked)
+        private void HandleCrouch(bool toggleOn)
+        {
+            if (toggleOn)
             {
-                _playerController.MoveSpeed = crouchSpeed;
-                _playerController.PlayerStride = crouchStride;
+                _blackboard.MoveSpeed = crouchSpeed;
+                _blackboard.PlayerStride = crouchStride;
             }
 
-            float heightTarget = _isCrouchPressed ? crouchHeight : _standingHeight;
+            if (_checkCollisionCoroutine != null) StopCoroutine(_checkCollisionCoroutine);
+            if (_crouchCoroutine != null) StopCoroutine(_crouchCoroutine);
+            _crouchCoroutine = StartCoroutine(PerformCrouch(toggleOn));
+        }
 
-            if (IsCrouching && !_isCrouchPressed)
+        private IEnumerator PerformCrouch(bool toggleOn)
+        {
+            float finalHeightTarget = toggleOn ? crouchHeight : _standingHeight;
+            _heightTarget = finalHeightTarget;
+
+            // While we have not reached the target height...
+            while (!Mathf.Approximately(finalHeightTarget, _currentHeight))
             {
-                _isBlocked = false;
-                foreach (Vector3 ray in _rayOffsets)
+                if (IsNotStanding && !_blackboard.IsCrouching)
                 {
-                    Vector3 origin = transform.position + ray + new Vector3(0, _currentHeight, 0);
-                    if (Physics.Raycast(origin, Vector3.up, out _hit, _standingHeight - _currentHeight, _layerMask))
-                    {
-                        float distanceToCeiling = _hit.point.y - origin.y;
-                        heightTarget = Mathf.Max(_currentHeight + distanceToCeiling - 0.01f, crouchHeight);
-                        _isBlocked = true;
-                    }
+                    if (_checkCollisionCoroutine != null) StopCoroutine(_checkCollisionCoroutine);
+                    _checkCollisionCoroutine = StartCoroutine(CheckHeightClearance());
                 }
-            }
 
-            if (!Mathf.Approximately(heightTarget, _currentHeight))
-            {
                 float crouchDelta = crouchTransitionSpeed * Time.deltaTime;
-                _currentHeight = Mathf.Lerp(_currentHeight, heightTarget, crouchDelta);
+                _currentHeight = Mathf.Lerp(_currentHeight, _heightTarget, crouchDelta);
 
                 Vector3 halfHeightDifference = new Vector3(0, (_standingHeight - _currentHeight) * 0.5f, 0);
                 Vector3 newCameraPosition = _initialCameraPosition - halfHeightDifference * 2.0f;
 
-                _playerController.camTransform.localPosition = newCameraPosition;
-                _playerController.Center = _standingCenter - halfHeightDifference;
-                _playerController.Height = _currentHeight;
+                cameraHolder.localPosition = newCameraPosition;
+                _playerController.center = _standingCenter - halfHeightDifference;
+                _playerController.height = _currentHeight;
+                yield return null;
             }
+
+            _blackboard.IsCrouchingBlocked = false;
         }
 
-        private void OnCrouch(InputValue value) {
-            _isCrouchPressed = value.isPressed;
-            _playerController.IsCrouching = _isCrouchPressed;
+        private IEnumerator CheckHeightClearance()
+        {
+            while (IsNotStanding)
+            {
+                Vector3 origin = transform.position + new Vector3(0, _currentHeight - crouchCollisionRadius, 0);
+
+                // DebugExtension.DebugWireSphere(origin, Color.red, crouchCollisionRadius, collisionDetectionCooldown);
+                // Debug.DrawLine(origin, origin + Vector3.up * (_standingHeight - _currentHeight), Color.white);
+
+                if (Physics.SphereCast(origin, crouchCollisionRadius, Vector3.up, out _hit, _standingHeight - _currentHeight,
+                        collisionDetectionLayerMask))
+                {
+                    float distanceToCeiling = _hit.point.y - crouchCollisionRadius - origin.y;
+                    _heightTarget = Mathf.Max(_currentHeight + distanceToCeiling - 0.01f, crouchHeight);
+                    _blackboard.IsCrouchingBlocked = true;
+
+                    // Vector3 targetPosDebug = origin + Vector3.up * distanceToCeiling;
+                    // DebugExtension.DebugWireSphere(targetPosDebug, Color.green, crouchCollisionRadius, collisionDetectionCooldown);
+                }
+                else _blackboard.IsCrouchingBlocked = false;
+
+                yield return _waitForSeconds;
+            }
         }
     }
 }
