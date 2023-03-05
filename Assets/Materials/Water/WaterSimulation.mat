@@ -26,8 +26,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Attenuation: 0.995
-    - _DeltaUV: 5
-    - _S2: 0.031
+    - _Attenuation: 0.987
+    - _DeltaUV: 0.5
+    - _S2: 0.441
     m_Colors: []
   m_BuildTextureStacks: []

@@ -10,6 +10,7 @@ namespace DeepDreams.Player
     public class PlayerFootsteps : MonoBehaviour
     {
         [SerializeField] private GameObject footstepMesh;
+        [SerializeField] private float meshLifetime;
 
         [SerializeField] private LayerMask collisionDetectionLayerMask;
         [SerializeField] private float collisionRadius;
@@ -92,21 +93,19 @@ namespace DeepDreams.Player
         private IEnumerator ToggleFootstep()
         {
             footstepMesh.SetActive(true);
-            yield return new WaitForEndOfFrame();
+            yield return meshLifetime == 0 ? new WaitForEndOfFrame() : new WaitForSeconds(meshLifetime);
             footstepMesh.SetActive(false);
         }
 
         private void OnDrawGizmos()
         {
-            if (Application.isPlaying)
-            {
-                Gizmos.color = Color.red;
-                Gizmos.DrawSphere(_prevStridePos + transform.forward * _blackboard.PlayerStride, 0.1f);
-                Gizmos.color = Color.green;
-                Gizmos.DrawSphere(_prevStridePos + transform.forward * _blackboard.PlayerStride * _blackboard.StrideDistance, 0.1f);
-
-                Gizmos.DrawWireSphere(_hit.point, collisionRadius);
-            }
+            // if (Application.isPlaying)
+            // {
+            //     Gizmos.color = Color.red;
+            //     Gizmos.DrawSphere(_prevStridePos + transform.forward * _blackboard.PlayerStride, 0.1f);
+            //     Gizmos.color = Color.green;
+            //     Gizmos.DrawSphere(_prevStridePos + transform.forward * _blackboard.PlayerStride * _blackboard.StrideDistance, 0.1f);
+            // }
         }
     }
 }

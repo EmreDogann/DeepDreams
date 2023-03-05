@@ -13,6 +13,7 @@ struct Attributes
     float3 vertexOS : POSITION;
     float2 uv : TEXCOORD0;
     float3 normalOS : NORMAL;
+    float4 tangentOS : TANGENT;
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -26,6 +27,7 @@ struct TessellationControlPoint
     float2 uv_MainTex : TEXCOORD1;
     float3 positionOAS : TEXCOORD2;
     float3 normalOS : TEXCOORD3;
+    float4 tangentWS : TEXCOORD4;
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -44,8 +46,9 @@ struct Interpolators
     float2 uv_MainTex : TEXCOORD1;
     float3 positionOAS : TEXCOORD2;
     float3 normalOS : TEXCOORD3;
-    float fogCoords : TEXCOORD4;
-    float2 barycentricCoordinates : TEXCOORD5;
+    float4 tangentWS : TEXCOORD4;
+    float fogCoords : TEXCOORD5;
+    float2 barycentricCoordinates : TEXCOORD6;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
