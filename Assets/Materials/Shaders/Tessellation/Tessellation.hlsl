@@ -20,8 +20,7 @@ struct Attributes
 struct TessellationControlPoint
 {
     float4 positionCS : SV_POSITION;
-    float3 positionWS : INTERNALTESSPOS;
-    // POSITION semantic is forbidden in this structure, so use INTERNALTESSPOS instead.
+    float3 positionWS : INTERNALTESSPOS; // POSITION semantic is forbidden in this structure, so use INTERNALTESSPOS instead.
     float3 normalWS : NORMAL;
     float2 uv : TEXCOORD0;
     float2 uv_MainTex : TEXCOORD1;

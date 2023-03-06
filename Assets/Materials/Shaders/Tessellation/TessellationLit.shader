@@ -51,16 +51,15 @@ Shader "Custom/TessellationLit"
         {
             "RenderPipeline" = "UniversalPipeline"
             "RenderType" = "Opaque"
-            "LightMode" = "SRPDefaultUnlit"
             "Queue" = "Geometry"
             "PreviewType" = "Plane"
             "ShaderModel" = "5.0"
         }
-        LOD 100
         
         Pass
         {
             Name "Tessellation"
+            Tags {"LightMode" = "UniversalForward"}
             Cull Back
             ZWrite On
             ZTest LEqual
@@ -120,6 +119,9 @@ Shader "Custom/TessellationLit"
                 float _WireframeSmoothing;
                 float _WireframeThickness;
 
+                float _HeightMap_Width;
+                float _HeightMap_Height;
+            
                 // Extract scale from object to world matrix.
                 static float3 scale = float3(
                     length(unity_ObjectToWorld._m00_m10_m20),
@@ -129,41 +131,15 @@ Shader "Custom/TessellationLit"
             CBUFFER_END
             
             #include "Tessellation.hlsl"
-            #include "Wireframe.hlsl"
-
-            // Sample the height map, using mipmaps.
-            float SampleHeight(float2 uv)
-            {
-                return SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, uv).r;
-            }
-            
-            // Calculate a normal vector by sampling the height map.
-            float3 GenerateNormalFromHeightMap(float2 uv)
-            {
-                // Sample the height from adjacent pixels.
-                float left = SampleHeight(uv - float2(_HeightMap_TexelSize.x, 0));
-                float right = SampleHeight(uv + float2(_HeightMap_TexelSize.x, 0));
-                float down = SampleHeight(uv - float2(0, _HeightMap_TexelSize.y));
-                float up = SampleHeight(uv + float2(0, _HeightMap_TexelSize.y));
-
-                // Generate a tangent space normal using the slope along the U and V axis.
-                float3 normalTS = float3(
-                    (left - right) / (_HeightMap_TexelSize.x * 2),
-                    (down - up) / (_HeightMap_TexelSize.y * 2),
-                    1
-                );
-
-                normalTS.xy *= _NormalStrength; // Adjust the XY channels to create stronger or weaker normals.
-                return normalize(normalTS);
-            }
+            // #include "Wireframe.hlsl"
 
             // float3 filterNormal(float2 uv, float texelSize, int terrainSize)
             // {
             //     float4 h;
-            //     h[0] = tex2D(_HeightMap, uv + texelSize*float2(0,-1)).r * _HeightMapAltitude;
-            //     h[1] = tex2D(_HeightMap, uv + texelSize*float2(-1,0)).r * _HeightMapAltitude;
-            //     h[2] = tex2D(_HeightMap, uv + texelSize*float2(1,0)).r * _HeightMapAltitude;
-            //     h[3] = tex2D(_HeightMap, uv + texelSize*float2(0,1)).r * _HeightMapAltitude;
+            //     h[0] = tex2D(_HeightMap, uv + texelSize*float2(0,-1)).r * _HeightMapAltitude; down
+            //     h[1] = tex2D(_HeightMap, uv + texelSize*float2(-1,0)).r * _HeightMapAltitude; left
+            //     h[2] = tex2D(_HeightMap, uv + texelSize*float2(1,0)).r * _HeightMapAltitude; right
+            //     h[3] = tex2D(_HeightMap, uv + texelSize*float2(0,1)).r * _HeightMapAltitude; up
             //
             //     float3 n;
             //     n.z = -(h[0] - h[3]);
@@ -172,6 +148,158 @@ Shader "Custom/TessellationLit"
             //
             //     return normalize(n);
             // }
+
+            // Sample the height map, using mipmaps.
+            float SampleHeight(float2 uv)
+            {
+                return SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, uv).r;
+            }
+            
+            // Calculate a normal vector by sampling the height map.
+            // float3 GenerateNormalFromHeightMap(float2 uv)
+            // {
+            //     float2 uvIncrement = _HeightMap_TexelSize;
+            //     // float2 uvIncrement = float2(0.01, 0.01);
+            //     // Sample the height from adjacent pixels.
+            //     float left = SampleHeight(uv - float2(uvIncrement.x, 0));
+            //     float right = SampleHeight(uv + float2(uvIncrement.x, 0));
+            //     float down = SampleHeight(uv - float2(0, uvIncrement.y));
+            //     float up = SampleHeight(uv + float2(0, uvIncrement.y));
+            //
+            //     // Generate a tangent space normal using the slope along the U and V axis.
+            //     float3 normalTS = float3(
+            //         (left - right) / (uvIncrement.x * 2),
+            //         (down - up) / (uvIncrement.y * 2),
+            //         1
+            //     );
+            //
+            //     normalTS.xy *= _NormalStrength; // Adjust the XY channels to create stronger or weaker normals.
+            //     return normalize(normalTS);
+            // }
+
+            float4 getTexel(float2 p)
+            {
+                float2 newUV = p * _HeightMap_Width + 0.5;
+
+                float2 i = floor(newUV);
+                float2 f = frac(newUV);
+                newUV = i + f * f * (3.0f - 2.0f * f);
+
+                newUV = (newUV - 0.5) / _HeightMap_Width;
+                return SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, newUV);
+            }
+
+            // from http://www.java-gaming.org/index.php?topic=35123.0
+            float4 cubic(float v){
+                float4 n = float4(1.0, 2.0, 3.0, 4.0) - v;
+                float4 s = n * n * n;
+                float x = s.x;
+                float y = s.y - 4.0 * s.x;
+                float z = s.z - 4.0 * s.y + 6.0 * s.x;
+                float w = 6.0 - x - y - z;
+                return float4(x, y, z, w) * (1.0/6.0);
+            }
+
+            float4 textureBicubic(SamplerState samplerTex, float2 texCoords)
+            {
+                float2 texSize = float2(_HeightMap_Width, _HeightMap_Height);
+                float2 invTexSize = 1.0 / texSize;
+
+                texCoords = texCoords * texSize - 0.5;
+               
+                float2 fxy = frac(texCoords);
+                texCoords -= fxy;
+
+                float4 xcubic = cubic(fxy.x);
+                float4 ycubic = cubic(fxy.y);
+
+                float4 c = texCoords.xxyy + float2 (-0.5, +1.5).xyxy;
+                
+                float4 s = float4(xcubic.xz + xcubic.yw, ycubic.xz + ycubic.yw);
+                float4 offset = c + float4 (xcubic.yw, ycubic.yw) / s;
+                
+                offset *= invTexSize.xxyy;
+                
+                float4 sample0 = _HeightMap.Sample(samplerTex, offset.xz);
+                float4 sample1 = _HeightMap.Sample(samplerTex, offset.yz);
+                float4 sample2 = _HeightMap.Sample(samplerTex, offset.xw);
+                float4 sample3 = _HeightMap.Sample(samplerTex, offset.yw);
+
+                float sx = s.x / (s.x + s.y);
+                float sy = s.z / (s.z + s.w);
+
+                return lerp(
+                   lerp(sample3, sample2, sx),
+                   lerp(sample1, sample0, sx),
+                   sy
+                );
+            }
+
+            float3 GenerateNormalFromHeightMap(float2 uv)
+            {
+                float2 uvIncrement = _HeightMap_TexelSize * 4.0f;
+                // float2 uvIncrement = float2(0.01, 0.01);
+                // Sample the height from adjacent pixels.
+                float left = SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, uv + float2(-1, 0) * uvIncrement.x).r * _HeightMapAltitude;
+                float right = SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, uv + float2(1, 0) * uvIncrement.x).r * _HeightMapAltitude;
+                float down = SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, uv + float2(0, -1) * uvIncrement.y).r * _HeightMapAltitude;
+                float up = SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, uv + float2(0, 1) * uvIncrement.y).r * _HeightMapAltitude;
+
+                // float left = textureBicubic(sampler_HeightMap, uv + float2(-1, 0) * uvIncrement.x).r * _HeightMapAltitude;
+                // float right = textureBicubic(sampler_HeightMap, uv + float2(1, 0) * uvIncrement.x).r * _HeightMapAltitude;
+                // float down = textureBicubic(sampler_HeightMap, uv + float2(0, -1) * uvIncrement.x).r * _HeightMapAltitude;
+                // float up = textureBicubic(sampler_HeightMap, uv + float2(0, 1) * uvIncrement.x).r * _HeightMapAltitude;
+                
+                // float left = getTexel(uv + float2(-1, 0) * uvIncrement.x).r * _HeightMapAltitude;
+                // float right = getTexel(uv + float2(1, 0) * uvIncrement.x).r * _HeightMapAltitude;
+                // float down = getTexel(uv + float2(0, -1) * uvIncrement.y).r * _HeightMapAltitude;
+                // float up = getTexel(uv + float2(0, 1) * uvIncrement.y).r * _HeightMapAltitude;
+                
+                // Generate a tangent space normal using the slope along the U and V axis.
+                float3 normalTS = float3(
+                    (left - right) / (uvIncrement.x * 2),
+                    (down - up) / (uvIncrement.y * 2),
+                    1
+                );
+                
+                normalTS.xy *= _NormalStrength; // Adjust the XY channels to create stronger or weaker normals.
+                return normalize(normalTS);
+
+                // float original = getTexel(uv).r;
+                // // float left = getTexel(uv + float2(-1, 0) * uvIncrement.x).r;
+                // float right = getTexel(uv + float2(1, 0) * uvIncrement.x).r;
+                // // float down = getTexel(uv + float2(0, -1) * uvIncrement.y).r;
+                // float up = getTexel(uv + float2(0, 1) * uvIncrement.y).r;
+                //
+                // // float3 va = normalize(float3(1.0 * uvIncrement.x, left - right, 0.0f));
+                // // float3 vb = normalize(float3(0.0, up - down, 1.0 * uvIncrement.y));
+                // float3 va = float3(1.0 * uvIncrement.x, 0.0f, right - original);
+                // float3 vb = float3(0.0, 1.0 * uvIncrement.y, up - original);
+                // return normalize(cross(va, vb) * _NormalStrength);
+
+                // Sample the height from adjacent pixels.
+                // float left = getTexel(uv + float2(-1, 0) * uvIncrement.x).g;
+                // float right = getTexel(uv + float2(1, 0) * uvIncrement.x).g;
+                // float down = getTexel(uv + float2(0, -1) * uvIncrement.y).g;
+                // float up = getTexel(uv + float2(0, 1) * uvIncrement.y).g;
+
+                // float left = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, uv + float2(-1, 0) * uvIncrement.x, 0).r * _HeightMapAltitude;
+                // float right = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap,uv + float2(1, 0) * uvIncrement.x, 0).r * _HeightMapAltitude;
+                // float down = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap,uv + float2(0, -1) * uvIncrement.y, 0).r * _HeightMapAltitude;
+                // float up = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap,uv + float2(0, 1) * uvIncrement.y, 0).r * _HeightMapAltitude;
+                
+                // float3 normalTS = float3(left - right, down - up, 1.0f);
+                
+                // Generate a tangent space normal using the slope along the U and V axis.
+                // float3 normalTS = float3(
+                //     (left - right) / (uvIncrement.x * 2),
+                //     (down - up) / (uvIncrement.y * 2),
+                //     1
+                // );
+                //
+                // normalTS.xy *= _NormalStrength; // Adjust the XY channels to create stronger or weaker normals.
+                // return normalize(normalTS);
+            }
 
             TessellationControlPoint Vertex(Attributes input)
             {
@@ -220,20 +348,25 @@ Shader "Custom/TessellationLit"
                 BARYCENTRIC_INTERPOLATE(positionOAS);
                 BARYCENTRIC_INTERPOLATE(normalOS);
                 BARYCENTRIC_INTERPOLATE(normalWS);
-                BARYCENTRIC_INTERPOLATE(tangentWS.xyz);
+                BARYCENTRIC_INTERPOLATE(tangentWS);
                 BARYCENTRIC_INTERPOLATE(uv);
                 BARYCENTRIC_INTERPOLATE(uv_MainTex);
 
                 // Apply height map.
                 const float height = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, output.uv, 0).r * _HeightMapAltitude;
                 output.positionWS += output.normalWS * height;
-
+                
                 output.tangentWS = float4(output.tangentWS.xyz, patch[0].tangentWS.w);
                 output.positionCS = TransformWorldToHClip(output.positionWS);
                 // Apply only the scale to the object space vertex in order to compensate for rotation.
                 output.positionOAS *= scale; // OAS = Object Aligned Space
                 output.fogCoords = ComputeFogFactor(output.positionCS.z);
 
+                // float3x3 tangentToWorld = CreateTangentToWorld(output.normalWS, output.tangentWS.xyz, output.tangentWS.w);
+                // float3 normalTS = GenerateNormalFromHeightMap(output.uv);
+                // float3 normalWS = normalize(TransformTangentToWorld(normalTS, tangentToWorld));
+                // output.normalWS = normalWS;
+                
                 return output;
             }
             

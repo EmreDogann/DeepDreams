@@ -25,6 +25,8 @@ namespace DeepDreams.Player
         private Coroutine _coroutine;
         private RaycastHit _hit;
 
+        private Material footstepMaterial;
+
         // Start is called before the first frame update
         private void Awake()
         {
@@ -32,6 +34,7 @@ namespace DeepDreams.Player
             _blackboard.OnStrideChange += OnStrideChange;
 
             footstepMesh.SetActive(false);
+            footstepMaterial = footstepMesh.GetComponent<MeshRenderer>().material;
         }
 
         private void OnDestroy()
@@ -92,6 +95,9 @@ namespace DeepDreams.Player
 
         private IEnumerator ToggleFootstep()
         {
+            if (_blackboard.currentPlayerState == PlayerState.Running) footstepMaterial.color = new Color(0.1f, 0.0f, 0.0f, 1.0f);
+            else footstepMaterial.color = new Color(0.05f, 0.0f, 0.0f, 1.0f);
+
             footstepMesh.SetActive(true);
             yield return meshLifetime == 0 ? new WaitForEndOfFrame() : new WaitForSeconds(meshLifetime);
             footstepMesh.SetActive(false);

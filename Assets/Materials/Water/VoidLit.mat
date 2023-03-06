@@ -58,7 +58,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
+        m_Scale: {x: 100, y: 100}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
@@ -106,7 +106,7 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _HeightMapAltitude: 1
+    - _HeightMapAltitude: 5
     - _Metallic: 0
     - _NormalStrength: 1
     - _OcclusionStrength: 1
@@ -114,7 +114,7 @@ Material:
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _Smoothness: 0.5
+    - _Smoothness: 0.6
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -122,7 +122,7 @@ Material:
     - _TESSELLATION_FACTOR: 3
     - _TESSELLATION_SMOOTHING: 1
     - _TessellationBias: 0
-    - _TessellationFactor: 0.1
+    - _TessellationFactor: 0.05
     - _TessellationSmoothing: 0.75
     - _Triplanar: 0
     - _TriplanarAligned: 1
@@ -131,15 +131,15 @@ Material:
     - _TriplanarScale: 1
     - _Wireframe: 0
     - _WireframeSmoothing: 1
-    - _WireframeThickness: 0
+    - _WireframeThickness: 0.84
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0, g: 0, b: 0, a: 1}
+    - _BaseColor: {r: 0.5754717, g: 0, b: 0, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _WireframeColor: {r: 0.25182155, g: 0.22063005, b: 0.6981132, a: 1}
+    - _WireframeColor: {r: 0.21960784, g: 0.69803923, b: 0.48305523, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &1523543194001443010
 MonoBehaviour:

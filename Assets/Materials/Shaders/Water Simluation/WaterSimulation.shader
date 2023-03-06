@@ -2,9 +2,10 @@
 {
 	Properties
 	{
-		_S2("PhaseVelocity^2", Range(0.0, 0.5)) = 0.2
-		[PowerSlider(0.01)] _Attenuation("Attenuation", Range(0.0, 1.0)) = 0.999
-		_DeltaUV("Delta UV", Float) = 3
+//		_S2("PhaseVelocity^2", Range(0.0, 0.5)) = 0.2
+//		_Amplitude("Amplitude", Range(0.0, 10)) = 1
+//		[PowerSlider(0.01)] _Attenuation("Attenuation", Range(0.0, 1.0)) = 0.999
+//		_DeltaUV("Delta UV", Float) = 3
 		[NoScaleOffset] _CollisionTex("CollisionTexture", 2D) = "black" {}
 	}
 	
@@ -26,9 +27,11 @@
 
             // CBUFFER section needed for SRP batching.
             CBUFFER_START(UnityPerMaterial)
-                float _S2;
+                // float _S2;
+				float _a;
 				float _Attenuation;
-				float _DeltaUV;
+				float _Amplitude;
+				float _UVScale;
 				sampler2D _CollisionTex;
             CBUFFER_END
 
@@ -37,31 +40,69 @@
 	            const float2 uv = IN.globalTexcoord;
 
             	// Get Texel Size.
-            	float du = 1.0 / _CustomRenderTextureWidth;
-            	float dv = 1.0 / _CustomRenderTextureHeight;
-            	float3 duv = float3(du, dv, 0) * _DeltaUV;
+            	float du = 1.0f / _CustomRenderTextureWidth;
+            	float dv = 1.0f / _CustomRenderTextureHeight;
+            	float3 duv = float3(du, dv, 0.0f) * _UVScale;
+
+            	// _SelfTexture2D: Red Channel - Current simulation state.
+            	// _SelfTexture2D: Green Channel - Previous simulation state.
+
+            	// Run Simulation Step
+     //        	float2 c = tex2D(_SelfTexture2D, uv);
+     //        	float p = (2 * c.r - c.g + _S2 * (
+					// tex2D(_SelfTexture2D, uv - duv.zy).r +
+					// tex2D(_SelfTexture2D, uv + duv.zy).r +
+					// tex2D(_SelfTexture2D, uv - duv.xz).r +
+					// tex2D(_SelfTexture2D, uv + duv.xz).r - 4 * c.r
+     //        	)) * _Attenuation;
 
             	// Run Simulation Step
             	float2 c = tex2D(_SelfTexture2D, uv);
-            	float p = (2 * c.r - c.g + _S2 * (
+            	float p = (2 * c.r - c.g + _a * (
 					tex2D(_SelfTexture2D, uv - duv.zy).r +
 					tex2D(_SelfTexture2D, uv + duv.zy).r +
 					tex2D(_SelfTexture2D, uv - duv.xz).r +
 					tex2D(_SelfTexture2D, uv + duv.xz).r - 4 * c.r
             	)) * _Attenuation;
+            	
+            	// Run Simulation Step - Alternative version
+     //        	float2 c = tex2D(_SelfTexture2D, uv);
+     //        	float p = _Attenuation * (_a * (
+					// tex2D(_SelfTexture2D, uv + duv.xz).r +
+					// tex2D(_SelfTexture2D, uv - duv.xz).r +
+					// tex2D(_SelfTexture2D, uv + duv.zy).r +
+					// tex2D(_SelfTexture2D, uv - duv.zy).r
+     //        	) + (2.0f - 4.0f * _a) * c.r - c.g);
 
                 const float prevCollision = tex2D(_SelfTexture2D, uv).b;
-            	float collision = tex2D(_CollisionTex, uv).r;
-            	if (collision > 0.0 && prevCollision == 0.0)
+	            const float collision = tex2D(_CollisionTex, uv).r;
+            	// if (collision > 0.0f && prevCollision == 0.0f)
+            	// {
+            	// 	p = _Amplitude * saturate(p - collision);
+            	// } else if (collision == 0.0f && prevCollision > 0.0f)
+            	// {
+            	// 	p = _Amplitude * saturate(p + prevCollision);
+            	// }
+
+            	// If there was a collision where there was non previously, raise the water.
+            	// if (collision > 0.0f && prevCollision == 0.0f)
+            	// {
+            	// 	p += collision * _Amplitude;
+            	// }
+	            //
+            	// // If there was a previous collision where there isn't one now, lower the water.
+            	// if (collision == 0.0f && prevCollision > 0.0f)
+            	// {
+            	// 	p -= prevCollision * _Amplitude;
+            	// }
+
+            	// If there was a collision where there was non previously, lower the water.
+            	if (collision > 0.0f && prevCollision == 0.0f)
             	{
-            		p = saturate(p - collision);
-            	}
-            	if (prevCollision > 0.0 && collision == 0.0)
-            	{
-            		p = saturate(p + prevCollision);
+            		p -= collision * _Amplitude;
             	}
             	
-                return float4(p, c.r, collision, 0);
+                return float4(p, c.r, collision, 1.0f);
             }
 			
             ENDCG
