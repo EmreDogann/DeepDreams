@@ -3,15 +3,21 @@ Shader "Custom/TessellationLit"
     Properties
     {
         [Header(Textures)] [Space] [MainTexture] _MainTex("Main Texture", 2D) = "white" {}
+        [MainColor] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
         [NoScaleOffset] _FogCube("Fog Cube Texture", CUBE) = "" {}
         [NoScaleOffset] _WaterNormal1("Water Normal Map 1", 2D) = "bump" {}
         [NoScaleOffset] _WaterNormal2("Water Normal Map 2", 2D) = "bump" {}
-        [NoScaleOffset] _WaterFlowMap("Water Flow Map", 2D) = "black" {}
-        [MainColor] _BaseColor("Base Color", Color) = (1, 1, 1, 1)
-        _Smoothness("Smoothness", Float) = 0
         _SimulationNormalStrength("Simulation Normal Strength", Float) = 1
         _NormalMapStrength("Water Normal Map Strength", Float) = 1
         _NormalMapSize("Water Normal Map Size", Float) = 1
+        [NoScaleOffset] _WaterFlowMap("Water Flow Map (RG, A noise)", 2D) = "black" {}
+        _Tiling ("Tiling", Float) = 1
+        _Speed ("Speed", Float) = 1
+        _FlowStrength ("Flow Strength", Float) = 1
+        _FlowOffset ("Flow Offset", Float) = 0
+        _UJump ("Flow Map U jump per phase", Range(-0.25, 0.25)) = 0.25
+		_VJump ("Flow Map V jump per phase", Range(-0.25, 0.25)) = 0.25
+        _Smoothness("Smoothness", Float) = 0
         
         [Header(Tessellation)] [Space] [NoScaleOffset] _HeightMap("Tessellation Height Map", 2D) = "black" {}
         _HeightMapAltitude("Height Map Altitude", Range(0, 100)) = 1
@@ -112,6 +118,12 @@ Shader "Custom/TessellationLit"
                 float4 _MainTex_ST;
                 float4 _BaseColor;
                 float _Smoothness;
+                float _UJump;
+                float _VJump;
+                float _Tiling;
+                float _Speed;
+                float _FlowStrength;
+                float _FlowOffset;
 
                 float _NormalMapStrength;
                 float _NormalMapSize;
@@ -334,8 +346,8 @@ Shader "Custom/TessellationLit"
             float waveHeight(float2 position)
             {
                 float height = 0.0;
-                height += wave(position, float2(1, 0), 0.05f, 1.0f, 1, _Time.x);
-                // height += wave(position, float2(0, 1), 0.05f, 1.0f, 1, _Time.x);
+                height += wave(position, float2(1, 0), 0.01f, 4.0f, 1, _Time.x);
+                height += wave(position, float2(0, 1), 0.01f, 2.0f, 1, _Time.x);
                 
                 return height;
             }
@@ -431,33 +443,6 @@ Shader "Custom/TessellationLit"
                 BARYCENTRIC_INTERPOLATE(normalOS);
                 BARYCENTRIC_INTERPOLATE(uv);
                 BARYCENTRIC_INTERPOLATE(uv_MainTex);
-
-                // // Create two fake neighbour vertices.
-                // float3 v0 = output.positionWS;
-                // float3 v1 = v0 + float3(0.001, 0, 0);
-                // float3 v2 = v0 + float3(0, 0, 0.001);
-
-                // float3 bitangent = float3(1, 0, 0);
-                // float3 tangent   = float3(0, 0, 1);
-                // float offset = 0.01;
-                //
-                // float heightBitangent = waveHeight(output.positionWS.xz + (bitangent.xz * offset));
-                // float height = waveHeight(output.positionWS.xz);
-                // float heightTangent = waveHeight(output.positionWS.xz + (tangent.xz * offset));
-                //
-                // float3 bitangentVertex = output.positionWS + (bitangent * offset);
-                // bitangentVertex.y = heightBitangent;
-                //
-                // float3 originalVertex = output.positionWS;
-                // originalVertex.y = height;
-                //
-                // float3 tangentVertex = output.positionWS + (tangent * offset);
-                // tangentVertex.y = heightTangent;
-                //
-                // float3 newBitangent = (bitangentVertex - originalVertex);
-                // float3 newTangent = (tangentVertex - originalVertex);
-                //
-                // normalWS = normalize(cross(newTangent, newBitangent));
                 
                 // noise.octaves = 1;
                 // noise.frequency = 1.0f;
@@ -470,34 +455,29 @@ Shader "Custom/TessellationLit"
                 // Apply height map.
                 const float height = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, output.uv, 0).r * _HeightMapAltitude;
                 output.positionWS += output.normalWS * height;
+                output.positionWS += waveHeight(output.positionWS.xz);
                 
-                // output.normalWS = waveNormal(output.positionWS.xz);
-                // const float height1 = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, v1.xz, 0).r * _HeightMapAltitude;
-                // v1 += output.normalWS * height1;
-                //
-                // const float height2 = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, v2.xz, 0).r * _HeightMapAltitude;
-                // v2 += output.normalWS * height2;
-                //
-                // float3 vna = cross(v2-v0, v1-v0);
-                // output.normalWS = vna;
-
-                // output.positionWS.y += height;
-                // normalWS = waveNormal(output.positionWS.xz);
                 output.normalWS = normalWS;
                 output.tangentWS = float4(tangentWS, patch[0].tangentWS.w);
-                // output.tangentWS = float4(output.tangentWS.xyz, patch[0].tangentWS.w);
                 output.positionCS = TransformWorldToHClip(output.positionWS);
-                // Apply only the scale to the object space vertex in order to compensate for rotation.
-                output.positionOAS *= scale; // OAS = Object Aligned Space
+                output.positionOAS *= scale; // OAS = Object Aligned Space. Apply only the scale to the object space vertex in order to compensate for rotation.
                 output.fogCoords = ComputeFogFactor(output.positionCS.z);
                 output.viewDir = GetWorldSpaceNormalizeViewDir(output.positionWS);
                 
                 return output;
             }
 
-            float2 FlowUV (float2 uv, float2 flowVector, float time) {
-                float progress = frac(time);
-	            return uv - flowVector * progress;
+            float3 FlowUVW(float2 uv, float2 flowVector, float2 jump, float flowOffset, float tiling, float time, bool flowB) {
+                float phaseOffset = flowB ? 0.5 : 0;
+                float progress = frac(time + phaseOffset);
+                float3 uvw;
+                
+                uvw.xy = uv - flowVector * (progress + flowOffset);
+                uvw.xy *= tiling;
+                uvw.xy += phaseOffset;
+                uvw.xy += (time - progress) * jump;
+                uvw.z = 1 - abs(1 - 2 * progress);
+	            return uvw;
             }
             
             float4 Fragment(Interpolators input) : SV_Target
@@ -542,7 +522,6 @@ Shader "Custom/TessellationLit"
                 #endif
                 color *= _BaseColor;
 
-                float3x3 tangentToWorld = CreateTangentToWorld(input.normalWS, input.tangentWS.xyz, input.tangentWS.w);
                 
                 // Fog Reference: https://github.com/keijiro/KinoFog/blob/master/Assets/Kino/Fog/Shader/Fog.shader
                 // https://www.reddit.com/r/Unity3D/comments/7wm02n/perfect_fog_for_your_game_trouble_matching_fog/
@@ -563,29 +542,31 @@ Shader "Custom/TessellationLit"
                     float minBary = min(barys.x, min(barys.y, barys.z));
                     color = lerp(_WireframeColor, color, minBary);
                 #endif
-
-                float3 normalTS;
-                // Map is in 0-1 range. We have to map it back to -1-1 range using *2-1.
-                float2 flowVector = SAMPLE_TEXTURE2D(_WaterFlowMap, sampler_WaterFlowMap, input.uv).rg * 2 - 1; // We only need the red & green channels.
-                // float2 flowUV = FlowUV(input.uv, flowVector, _Time.x);
-                float2 flowUV = input.positionWS.xz + _Time.x;
-                float3 waterNormal1 = UnpackNormalScale(SAMPLE_TEXTURE2D(_WaterNormal1, sampler_WaterNormal1, flowUV * _NormalMapSize), _NormalMapStrength);
-                float3 waterNormal2 = UnpackNormalScale(SAMPLE_TEXTURE2D(_WaterNormal2, sampler_WaterNormal2, flowUV * float2(2,-4) * 0.1 + _Time.x / 5), _NormalMapStrength);
-                normalTS = BlendNormal(waterNormal1, waterNormal2);
-                // normalTS = (waterNormal1 + waterNormal2) * 0.5f;
-                // normalTS += pow(normalTS, 1.5);
-                normalTS = BlendNormal(normalTS, GenerateNormalFromHeightMap(input.uv));
-                normalTS = normalize(normalTS);
-
-                float3 normalWS = TransformTangentToWorld(normalTS, tangentToWorld);
-                // float3 normalWS = waveNormal(input.positionWS.xz);
-
-                // output.positionWS += normalWS * fnlGetNoise2D(noise, output.positionWS.x, output.positionWS.z  + _Time.y / 5) / 8;
                 
+                float3 flow = SAMPLE_TEXTURE2D(_WaterFlowMap, sampler_WaterFlowMap, input.uv).rgb;
+			    flow.xy = flow.xy * 2 - 1; // Map is in 0-1 range. We have to map it back to -1-1 range using *2-1.
+                flow *= _FlowStrength;
+                float noise = SAMPLE_TEXTURE2D(_WaterFlowMap, sampler_WaterFlowMap, input.uv).a; // Greyscale noise in alpha channel.
+			    float time = _Time.x * _Speed + noise;
+                float2 jump = float2(_UJump, _VJump);
+                float3 flowUVW_A = FlowUVW(input.uv, flow.xy, jump, _FlowOffset, _Tiling, time, false);
+                float3 flowUVW_B = FlowUVW(input.uv, flow.xy, jump, _FlowOffset, _Tiling, time, true);
+                
+                float3 waterNormal1_A = UnpackNormalScale(SAMPLE_TEXTURE2D(_WaterNormal1, sampler_WaterNormal1, flowUVW_A.xy * _NormalMapSize), _NormalMapStrength) * flowUVW_A.z;
+                float3 waterNormal2_A = UnpackNormalScale(SAMPLE_TEXTURE2D(_WaterNormal2, sampler_WaterNormal2, flowUVW_A.xy * _NormalMapSize - time / 2), _NormalMapStrength) * flowUVW_A.z;
+                
+                float3 waterNormal1_B = UnpackNormalScale(SAMPLE_TEXTURE2D(_WaterNormal1, sampler_WaterNormal1, flowUVW_B.xy * _NormalMapSize), _NormalMapStrength) * flowUVW_B.z;
+                float3 waterNormal2_B = UnpackNormalScale(SAMPLE_TEXTURE2D(_WaterNormal2, sampler_WaterNormal2, flowUVW_B.xy * _NormalMapSize - time / 2), _NormalMapStrength) * flowUVW_B.z;
+                // float3 normalTS = BlendNormal(BlendNormal(waterNormal1_A, waterNormal1_B), BlendNormal(waterNormal2_A, waterNormal2_B)) * flow.z;
+                float3 normalTS = ((waterNormal1_A + waterNormal1_B) + (waterNormal2_A + waterNormal2_B)) * flow.z;
+                normalTS = BlendNormal(normalTS, GenerateNormalFromHeightMap(input.uv));
+
+                float3x3 tangentToWorld = CreateTangentToWorld(input.normalWS, input.tangentWS.xyz, input.tangentWS.w);
+                float3 normalWS = TransformTangentToWorld(normalTS, tangentToWorld);
+
                 InputData lightingInput = (InputData)0; // Info about position and orientation of mesh at current fragment.
                 lightingInput.positionWS = input.positionWS;
-                // lightingInput.normalWS = normalize(input.normalWS);
-                lightingInput.normalWS = NormalizeNormalPerPixel(normalWS);
+                lightingInput.normalWS = normalWS;
                 lightingInput.viewDirectionWS = input.viewDir;
                 lightingInput.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
 
