@@ -2,10 +2,10 @@
 {
 	Properties
 	{
-//		_S2("PhaseVelocity^2", Range(0.0, 0.5)) = 0.2
-//		_Amplitude("Amplitude", Range(0.0, 10)) = 1
-//		[PowerSlider(0.01)] _Attenuation("Attenuation", Range(0.0, 1.0)) = 0.999
-//		_DeltaUV("Delta UV", Float) = 3
+		[HideInInspector] _A("A", Float) = 0
+		[HideInInspector] _Attenuation("Attenuation", Float) = 0
+		[HideInInspector] _Amplitude("Amplitude", Float) = 0
+		[HideInInspector] _UVScale("UV Scale", Float) = 0
 		[NoScaleOffset] _CollisionTex("CollisionTexture", 2D) = "black" {}
 	}
 	
@@ -28,7 +28,7 @@
             // CBUFFER section needed for SRP batching.
             CBUFFER_START(UnityPerMaterial)
                 // float _S2;
-				float _a;
+				float _A;
 				float _Attenuation;
 				float _Amplitude;
 				float _UVScale;
@@ -58,7 +58,7 @@
 
             	// Run Simulation Step
             	float2 c = tex2D(_SelfTexture2D, uv);
-            	float p = (2 * c.r - c.g + _a * (
+            	float p = (2 * c.r - c.g + _A * (
 					tex2D(_SelfTexture2D, uv - duv.zy).r +
 					tex2D(_SelfTexture2D, uv + duv.zy).r +
 					tex2D(_SelfTexture2D, uv - duv.xz).r +
@@ -67,12 +67,12 @@
             	
             	// Run Simulation Step - Alternative version
      //        	float2 c = tex2D(_SelfTexture2D, uv);
-     //        	float p = _Attenuation * (_a * (
+     //        	float p = _Attenuation * (_A * (
 					// tex2D(_SelfTexture2D, uv + duv.xz).r +
 					// tex2D(_SelfTexture2D, uv - duv.xz).r +
 					// tex2D(_SelfTexture2D, uv + duv.zy).r +
 					// tex2D(_SelfTexture2D, uv - duv.zy).r
-     //        	) + (2.0f - 4.0f * _a) * c.r - c.g);
+     //        	) + (2.0f - 4.0f * _A) * c.r - c.g);
 
                 const float prevCollision = tex2D(_SelfTexture2D, uv).b;
 	            const float collision = tex2D(_CollisionTex, uv).r;

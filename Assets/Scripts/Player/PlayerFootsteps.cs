@@ -34,7 +34,8 @@ namespace DeepDreams.Player
             _blackboard.OnStrideChange += OnStrideChange;
 
             footstepMesh.SetActive(false);
-            footstepMaterial = footstepMesh.GetComponent<MeshRenderer>().material;
+            footstepMaterial = footstepMesh.GetComponent<MeshRenderer>().sharedMaterial;
+            footstepMaterial.color = new Color(0.0f, 0.0f, 0.0f, 0.0f);
         }
 
         private void OnDestroy()
@@ -95,12 +96,13 @@ namespace DeepDreams.Player
 
         private IEnumerator ToggleFootstep()
         {
-            if (_blackboard.currentPlayerState == PlayerState.Running) footstepMaterial.color = new Color(0.1f, 0.0f, 0.0f, 1.0f);
+            if (_blackboard.currentPlayerState == PlayerState.Running) footstepMaterial.color = new Color(0.15f, 0.0f, 0.0f, 1.0f);
             else footstepMaterial.color = new Color(0.05f, 0.0f, 0.0f, 1.0f);
 
             footstepMesh.SetActive(true);
             yield return meshLifetime == 0 ? new WaitForEndOfFrame() : new WaitForSeconds(meshLifetime);
             footstepMesh.SetActive(false);
+            footstepMaterial.color = new Color(0.0f, 0.0f, 0.0f, 0.0f);
         }
 
         private void OnDrawGizmos()

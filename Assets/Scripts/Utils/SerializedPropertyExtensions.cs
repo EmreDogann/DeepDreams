@@ -18,6 +18,7 @@ using UnityEngine;
 
 namespace DeepDreams.Utils
 {
+#if UNITY_EDITOR
     public static class SerializedPropertyExtensions
     {
         public static T GetValue<T>(this SerializedProperty property) where T : class
@@ -131,4 +132,5 @@ namespace DeepDreams.Utils
             return false;
         }
     }
+#endif
 }

@@ -1,18 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-3712834518528778237
-MonoBehaviour:
-  m_ObjectHideFlags: 11
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  version: 5
 --- !u!21 &2100000
 Material:
   serializedVersion: 8
@@ -20,20 +7,19 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Fog
-  m_Shader: {fileID: 4800000, guid: 950e7676c1216bc4ea82e170c685a860, type: 3}
+  m_Name: VoidLit - No Interact
+  m_Shader: {fileID: 4800000, guid: 8d2bb70cbf9db8d4da26e15b26e74248, type: 3}
   m_ValidKeywords:
-  - ENABLE_ALIGNED_TRIPLANAR
-  - ENABLE_TRIPLANAR
-  - _PARTITIONING_FRAC_ODD
-  - _TESSELLATION_FACTOR_WORLD_WITH_DEPTH
-  - _TESSELLATION_SMOOTHING_PHONG
+  - _GLOSSINESS_FROM_BASE_ALPHA
+  - _RECEIVE_SHADOWS_OFF
+  - _SPECULAR_COLOR
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap: {}
+  stringTagMap:
+    RenderType: Opaque
   disabledShaderPasses: []
   m_SavedProperties:
     serializedVersion: 3
@@ -43,6 +29,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ClearCoatMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -63,15 +53,15 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _FogCube:
-        m_Texture: {fileID: 8900000, guid: c853daa0464ecbf4a9930124e40c2c68, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _HeightMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _HeightMap:
+        m_Texture: {fileID: 8600000, guid: 17f66ed3e1046124a821b2adb6e3dd7b, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 9079e287c000cbb4ab13b05d91c20504, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -107,7 +97,9 @@ Material:
     - _AlphaClip: 0
     - _BackFaceCullTolerance: 2
     - _Blend: 0
+    - _BlendOp: 0
     - _BumpScale: 1
+    - _ClearCoat: 0
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
     - _Cull: 2
@@ -115,47 +107,60 @@ Material:
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _EnableTriplanar: 0
-    - _EnvironmentReflections: 1
-    - _FactorEdge2: 1.12
-    - _FactorEdge3: 1
-    - _FactorInside: 1
-    - _FrustumCullTolerance: 1
+    - _EnvironmentReflections: 0
+    - _FrustumCullTolerance: 8
     - _GlossMapScale: 0
     - _Glossiness: 0
+    - _GlossinessSource: 0
     - _GlossyReflections: 0
-    - _HeightMapAltitude: 1
+    - _HeightMapAltitude: 5
     - _Metallic: 0
+    - _NormalStrength: 1
     - _OcclusionStrength: 1
     - _PARTITIONING: 2
     - _Parallax: 0.005
     - _QueueOffset: 0
-    - _ReceiveShadows: 1
+    - _ReceiveShadows: 0
+    - _Shininess: 0
     - _Smoothness: 0.5
+    - _SmoothnessSource: 1
     - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
+    - _SpecSource: 0
+    - _SpecularHighlights: 0
     - _SrcBlend: 1
     - _Surface: 0
     - _TESSELLATION_FACTOR: 3
     - _TESSELLATION_SMOOTHING: 1
     - _TessellationBias: 0
-    - _TessellationFactor: 0.1
+    - _TessellationFactor: 0.05
     - _TessellationSmoothing: 0.75
-    - _Triplanar: 1
+    - _Triplanar: 0
     - _TriplanarAligned: 1
-    - _TriplanarBlendOffset: 0.5
-    - _TriplanarBlendSharpness: 8
-    - _TriplanarScale: 2
+    - _TriplanarBlendOffset: 0.25
+    - _TriplanarBlendSharpness: 4
+    - _TriplanarScale: 1
     - _Wireframe: 0
     - _WireframeSmoothing: 1
-    - _WireframeThickness: 0
+    - _WireframeThickness: 0.84
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0, g: 0, b: 0, a: 0.5}
+    - _Color: {r: 0, g: 0, b: 0, a: 0.5}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _FactorEdge1: {r: 21, g: 1, b: 1, a: 0}
-    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _WireframeColor: {r: 0.8018868, g: 0.15508187, b: 0.24316834, a: 1}
+    - _SpecColor: {r: 1, g: 1, b: 1, a: 0.454}
+    - _WireframeColor: {r: 0.21960784, g: 0.69803923, b: 0.48305523, a: 1}
   m_BuildTextureStacks: []
+--- !u!114 &1523543194001443010
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 5

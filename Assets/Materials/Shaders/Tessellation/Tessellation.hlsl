@@ -5,7 +5,7 @@
 #pragma domain Domain
 
 #define CONTROL_POINTS 3
-#define BEZIER_FACTORS_CONTROL_POINTS CONTROL_POINTS
+#define NUM_BEZIER_CONTROL_POINTS 10
 #define INPUT_TYPE "tri"
 
 struct Attributes
@@ -34,6 +34,9 @@ struct TessellationFactors
 {
     float edge[3] : SV_TessFactor;
     float inside : SV_InsideTessFactor;
+    #if NUM_BEZIER_CONTROL_POINTS > 0
+    float3 bezierPoints[NUM_BEZIER_CONTROL_POINTS] : BEZIERPOS;
+    #endif
 };
 
 struct Interpolators
@@ -46,8 +49,9 @@ struct Interpolators
     float3 positionOAS : TEXCOORD2;
     float3 normalOS : TEXCOORD3;
     float4 tangentWS : TEXCOORD4;
-    float fogCoords : TEXCOORD5;
-    float2 barycentricCoordinates : TEXCOORD6;
+    float3 viewDir : TEXCOORD5;
+    float fogCoords : TEXCOORD6;
+    float2 barycentricCoordinates : TEXCOORD7;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
@@ -139,6 +143,47 @@ float EdgeTessellationFactor(float scale, float bias, float multiplier, float3 p
     return max(1, (factor + bias) * multiplier);
 }
 
+//Bezier control point calculations. See https://alex.vlachos.com/graphics/CurvedPNTriangles.pdf for explanation
+float3 CalculateBezierControlPoint(float3 p0PositionWS, float3 aNormalWS, float3 p1PositionWS, float3 bNormalWS)
+{
+    float w = dot(p1PositionWS - p0PositionWS, aNormalWS);
+    return (p0PositionWS * 2 + p1PositionWS - w * aNormalWS) / 3.0;
+}
+
+void CalculateBezierControlPoints(inout float3 bezierPoints[NUM_BEZIER_CONTROL_POINTS],
+                                  float3 p0PositionWS, float3 p0NormalWS, float3 p1PositionWS, float3 p1NormalWS, float3 p2PositionWS, float3 p2NormalWS)
+{
+    bezierPoints[0] = CalculateBezierControlPoint(p0PositionWS, p0NormalWS, p1PositionWS, p1NormalWS);
+    bezierPoints[1] = CalculateBezierControlPoint(p1PositionWS, p1NormalWS, p0PositionWS, p0NormalWS);
+    bezierPoints[2] = CalculateBezierControlPoint(p1PositionWS, p1NormalWS, p2PositionWS, p2NormalWS);
+    bezierPoints[3] = CalculateBezierControlPoint(p2PositionWS, p2NormalWS, p1PositionWS, p1NormalWS);
+    bezierPoints[4] = CalculateBezierControlPoint(p2PositionWS, p2NormalWS, p0PositionWS, p0NormalWS);
+    bezierPoints[5] = CalculateBezierControlPoint(p0PositionWS, p0NormalWS, p2PositionWS, p2NormalWS);
+    float3 avgBezier = 0;
+    [unroll] for (int i = 0; i < 6; i++)
+    {
+        avgBezier += bezierPoints[i];
+    }
+    avgBezier /= 6.0;
+    float3 avgControl = (p0PositionWS + p1PositionWS + p2PositionWS) / 3.0;
+    bezierPoints[6] = avgBezier + (avgBezier - avgControl) / 2.0;
+}
+
+float3 CalculateBezierControlNormal(float3 p0PositionWS, float3 aNormalWS, float3 p1PositionWS, float3 bNormalWS)
+{
+    float3 d = p1PositionWS - p0PositionWS;
+    float v = 2 * dot(d, aNormalWS + bNormalWS) / dot(d, d);
+    return normalize(aNormalWS + bNormalWS - v * d);
+}
+
+void CalculateBezierNormalPoints(inout float3 bezierPoints[NUM_BEZIER_CONTROL_POINTS],
+                                 float3 p0PositionWS, float3 p0NormalWS, float3 p1PositionWS, float3 p1NormalWS, float3 p2PositionWS, float3 p2NormalWS)
+{
+    bezierPoints[7] = CalculateBezierControlNormal(p0PositionWS, p0NormalWS, p1PositionWS, p1NormalWS);
+    bezierPoints[8] = CalculateBezierControlNormal(p1PositionWS, p1NormalWS, p2PositionWS, p2NormalWS);
+    bezierPoints[9] = CalculateBezierControlNormal(p2PositionWS, p2NormalWS, p0PositionWS, p0NormalWS);
+}
+
 // The patch constant function runs once per patch and in parallel to the hull function.
 TessellationFactors PatchConstantFunction(InputPatch<TessellationControlPoint, CONTROL_POINTS> patch)
 {
@@ -166,6 +211,12 @@ TessellationFactors PatchConstantFunction(InputPatch<TessellationControlPoint, C
         //                                                                         patch[2].positionCS, patch[0].positionWS, patch[0].positionCS),
         //     EdgeTessellationFactor(_TessellationFactor, _TessellationBias, 1, patch[0].positionWS, patch[0].positionCS, patch[1].positionWS,
         //                            patch[1].positionCS)) / 3.0;
+        #if defined(_TESSELLATION_SMOOTHING_BEZIER_QUAD_NORMALS)
+            CalculateBezierControlPoints(factors.bezierPoints, patch[0].positionWS, patch[0].normalWS, patch[1].positionWS, patch[1].normalWS, patch[2].positionWS,
+                                         patch[2].normalWS);
+            CalculateBezierNormalPoints(factors.bezierPoints, patch[0].positionWS, patch[0].normalWS, patch[1].positionWS, patch[1].normalWS, patch[2].positionWS,
+                                        patch[2].normalWS);
+        #endif
     }
 
     return factors;
@@ -198,6 +249,56 @@ float3 CalculatePhongPosition(float3 bary, float smoothing, float3 p0PositionWS,
         bary.y * PhongProjectedPosition(flatPositionWS, p1PositionWS, p1NormalWS) +
         bary.z * PhongProjectedPosition(flatPositionWS, p2PositionWS, p2NormalWS);
     return lerp(flatPositionWS, smoothedPositionWS, smoothing);
+}
+
+float3 CalculateBezierPosition(float3 bary, float smoothing, float3 bezierPoints[NUM_BEZIER_CONTROL_POINTS],
+                               float3 p0PositionWS, float3 p1PositionWS, float3 p2PositionWS)
+{
+    float3 flatPositionWS = BarycentricInterpolate(bary, p0PositionWS, p1PositionWS, p2PositionWS);
+    float3 smoothedPositionWS =
+        p0PositionWS * (bary.x * bary.x * bary.x) +
+        p1PositionWS * (bary.y * bary.y * bary.y) +
+        p2PositionWS * (bary.z * bary.z * bary.z) +
+        bezierPoints[0] * (3 * bary.x * bary.x * bary.y) +
+        bezierPoints[1] * (3 * bary.y * bary.y * bary.x) +
+        bezierPoints[2] * (3 * bary.y * bary.y * bary.z) +
+        bezierPoints[3] * (3 * bary.z * bary.z * bary.y) +
+        bezierPoints[4] * (3 * bary.z * bary.z * bary.x) +
+        bezierPoints[5] * (3 * bary.x * bary.x * bary.z) +
+        bezierPoints[6] * (6 * bary.x * bary.y * bary.z);
+    return lerp(flatPositionWS, smoothedPositionWS, smoothing);
+}
+
+float3 CalculateBezierNormal(float3 bary, float3 bezierPoints[NUM_BEZIER_CONTROL_POINTS],
+                             float3 p0NormalWS, float3 p1NormalWS, float3 p2NormalWS)
+{
+    return p0NormalWS * (bary.x * bary.x) +
+        p1NormalWS * (bary.y * bary.y) +
+        p2NormalWS * (bary.z * bary.z) +
+        bezierPoints[7] * (2 * bary.x * bary.y) +
+        bezierPoints[8] * (2 * bary.y * bary.z) +
+        bezierPoints[9] * (2 * bary.z * bary.x);
+}
+
+float3 CalculateBezierNormalWithSmoothFactor(float3 bary, float smoothing, float3 bezierPoints[NUM_BEZIER_CONTROL_POINTS],
+                                             float3 p0NormalWS, float3 p1NormalWS, float3 p2NormalWS)
+{
+    float3 flatNormalWS = BarycentricInterpolate(bary, p0NormalWS, p1NormalWS, p2NormalWS);
+    float3 smoothedNormalWS = CalculateBezierNormal(bary, bezierPoints, p0NormalWS, p1NormalWS, p2NormalWS);
+    return normalize(lerp(flatNormalWS, smoothedNormalWS, smoothing));
+}
+
+void CalculateBezierNormalAndTangent(float3 bary, float smoothing, float3 bezierPoints[NUM_BEZIER_CONTROL_POINTS],
+                                     float3 p0NormalWS, float3 p0TangentWS, float3 p1NormalWS, float3 p1TangentWS, float3 p2NormalWS, float3 p2TangentWS,
+                                     out float3 normalWS, out float3 tangentWS)
+{
+    float3 flatNormalWS = BarycentricInterpolate(bary, p0NormalWS, p1NormalWS, p2NormalWS);
+    float3 smoothedNormalWS = CalculateBezierNormal(bary, bezierPoints, p0NormalWS, p1NormalWS, p2NormalWS);
+    normalWS = normalize(lerp(flatNormalWS, smoothedNormalWS, smoothing));
+
+    float3 flatTangentWS = BarycentricInterpolate(bary, p0TangentWS, p1TangentWS, p2TangentWS);
+    float3 flatBitangentWS = cross(flatNormalWS, flatTangentWS);
+    tangentWS = normalize(cross(flatBitangentWS, normalWS));
 }
 
 #endif
