@@ -52,10 +52,6 @@ namespace DeepDreams.UI.Views
             categoryButtonBlocker.OnClicked += OnCategoryBlockerClicked;
             optionButtonsBlocker.OnClicked += OnOptionsBlockerClicked;
 
-            optionButtonsBlocker.OnToggle(true);
-            optionsViewLinks[0].SetVisible(true);
-            _currentActiveCategory = optionsViewLinks[0];
-
             for (int i = 0; i < optionsViewLinks.Count; i++)
             {
                 optionsViewLinks[i].From.OnCategoryChanged += CategoryChange;

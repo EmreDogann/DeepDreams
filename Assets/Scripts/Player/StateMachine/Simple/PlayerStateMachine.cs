@@ -30,6 +30,7 @@ namespace DeepDreams.Player.StateMachine.Simple
             Falling falling = new Falling(this, _blackboard);
             Crouching crouching = new Crouching(this, _blackboard);
 
+            At(falling, idle, IsGrounded);
             At(idle, walking, IsMoving);
             At(idle, crouching, IsCrouching);
             At(walking, running, IsRunning);

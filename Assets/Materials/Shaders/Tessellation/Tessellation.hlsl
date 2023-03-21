@@ -12,6 +12,7 @@ struct Attributes
 {
     float3 vertexOS : POSITION;
     float2 uv : TEXCOORD0;
+    float4 lightMap : TEXCOORD1;
     float3 normalOS : NORMAL;
     float4 tangentOS : TANGENT;
     UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -23,10 +24,11 @@ struct TessellationControlPoint
     float3 positionWS : INTERNALTESSPOS; // POSITION semantic is forbidden in this structure, so use INTERNALTESSPOS instead.
     float3 normalWS : NORMAL;
     float2 uv : TEXCOORD0;
-    float2 uv_MainTex : TEXCOORD1;
-    float3 positionOAS : TEXCOORD2;
-    float3 normalOS : TEXCOORD3;
-    float4 tangentWS : TEXCOORD4;
+    float4 lightMap : TEXCOORD1;
+    float2 uv_MainTex : TEXCOORD2;
+    float3 positionOAS : TEXCOORD3;
+    float3 normalOS : TEXCOORD4;
+    float4 tangentWS : TEXCOORD5;
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -37,23 +39,6 @@ struct TessellationFactors
     #if NUM_BEZIER_CONTROL_POINTS > 0
     float3 bezierPoints[NUM_BEZIER_CONTROL_POINTS] : BEZIERPOS;
     #endif
-};
-
-struct Interpolators
-{
-    float4 positionCS : SV_POSITION;
-    float3 positionWS : INTERNALTESSPOS;
-    float3 normalWS : NORMAL;
-    float2 uv : TEXCOORD0;
-    float2 uv_MainTex : TEXCOORD1;
-    float3 positionOAS : TEXCOORD2;
-    float3 normalOS : TEXCOORD3;
-    float4 tangentWS : TEXCOORD4;
-    float3 viewDir : TEXCOORD5;
-    float fogCoords : TEXCOORD6;
-    float2 barycentricCoordinates : TEXCOORD7;
-    UNITY_VERTEX_INPUT_INSTANCE_ID
-    UNITY_VERTEX_OUTPUT_STEREO
 };
 
 [domain(INPUT_TYPE)] // Signal we're inputting triangles.
@@ -232,6 +217,11 @@ float3 BarycentricInterpolate(float3 bary, float3 a, float3 b, float3 c)
     patch[0].fieldName * barycentricCoordinates.x + \
     patch[1].fieldName * barycentricCoordinates.y + \
     patch[2].fieldName * barycentricCoordinates.z
+
+#define BARYCENTRIC_INTERPOLATE_NOOUT(fieldName) fieldName = \
+patch[0].fieldName * barycentricCoordinates.x + \
+patch[1].fieldName * barycentricCoordinates.y + \
+patch[2].fieldName * barycentricCoordinates.z
 
 // Calculate Phong projection offset
 float3 PhongProjectedPosition(float3 flatPositionWS, float3 cornerPositionWS, float3 normalWS)

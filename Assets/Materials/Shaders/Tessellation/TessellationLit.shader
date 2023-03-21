@@ -86,11 +86,12 @@ Shader "Custom/TessellationLit"
             #pragma multi_compile_instancing
 
             // Material keywords - Lighting
+            #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
 
             // Material keywords - Tessellation
             #pragma shader_feature_local _PARTITIONING_INTEGER _PARTITIONING_FRAC_EVEN _PARTITIONING_FRAC_ODD _PARTITIONING_POW2
-            #pragma shader_feature_local _TESSELLATION_SMOOTHING_FLAT _TESSELLATION_SMOOTHING_PHONG, _TESSELLATION_SMOOTHING_BEZIER_QUAD_NORMALS
+            #pragma shader_feature_local _TESSELLATION_SMOOTHING_FLAT _TESSELLATION_SMOOTHING_PHONG _TESSELLATION_SMOOTHING_BEZIER_QUAD_NORMALS
             #pragma shader_feature_local _TESSELLATION_FACTOR_CONSTANT _TESSELLATION_FACTOR_WORLD _TESSELLATION_FACTOR_SCREEN _TESSELLATION_FACTOR_WORLD_WITH_DEPTH
 
             // Material keywords - Triplanar Mapping
@@ -102,8 +103,7 @@ Shader "Custom/TessellationLit"
             #define _SPECULAR_COLOR
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Assets/Materials/Shaders/Common.hlsl"
-            
+
             Texture2D _MainTex; SamplerState sampler_MainTex;
             
             Texture2D _WaterNormal1; SamplerState sampler_WaterNormal1;
@@ -157,229 +157,29 @@ Shader "Custom/TessellationLit"
                     length(unity_ObjectToWorld._m02_m12_m22)
                 );
             CBUFFER_END
-            
+
+            #include "Assets/Materials/Shaders/Common.hlsl"
             #include "Tessellation.hlsl"
+
+            struct Interpolators
+            {
+                float4 positionCS : SV_POSITION;
+                float3 positionWS : INTERNALTESSPOS;
+                float3 normalWS : NORMAL;
+                float2 uv : TEXCOORD0;
+                DECLARE_LIGHTMAP_OR_SH(lightmapUV, vertexSH, 1);
+                float2 uv_MainTex : TEXCOORD2;
+                float3 positionOAS : TEXCOORD3;
+                float3 normalOS : TEXCOORD4;
+                float4 tangentWS : TEXCOORD5;
+                float3 viewDir : TEXCOORD6;
+                float fogCoords : TEXCOORD7;
+                float2 barycentricCoordinates : TEXCOORD8;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+            
             // #include "Wireframe.hlsl"
-
-            // float3 filterNormal(float2 uv, float texelSize, int terrainSize)
-            // {
-            //     float4 h;
-            //     h[0] = tex2D(_HeightMap, uv + texelSize*float2(0,-1)).r * _HeightMapAltitude; down
-            //     h[1] = tex2D(_HeightMap, uv + texelSize*float2(-1,0)).r * _HeightMapAltitude; left
-            //     h[2] = tex2D(_HeightMap, uv + texelSize*float2(1,0)).r * _HeightMapAltitude; right
-            //     h[3] = tex2D(_HeightMap, uv + texelSize*float2(0,1)).r * _HeightMapAltitude; up
-            //
-            //     float3 n;
-            //     n.z = -(h[0] - h[3]);
-            //     n.x = (h[1] - h[2]);
-            //     n.y = 2 * texelSize * terrainSize; // pixel space -> uv space -> world space
-            //
-            //     return normalize(n);
-            // }
-
-            // Sample the height map, using mipmaps.
-            float SampleHeight(float2 uv)
-            {
-                return SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, uv).r;
-            }
-            
-            // Calculate a normal vector by sampling the height map.
-            // float3 GenerateNormalFromHeightMap(float2 uv)
-            // {
-            //     float2 uvIncrement = _HeightMap_TexelSize;
-            //     // float2 uvIncrement = float2(0.01, 0.01);
-            //     // Sample the height from adjacent pixels.
-            //     float left = SampleHeight(uv - float2(uvIncrement.x, 0));
-            //     float right = SampleHeight(uv + float2(uvIncrement.x, 0));
-            //     float down = SampleHeight(uv - float2(0, uvIncrement.y));
-            //     float up = SampleHeight(uv + float2(0, uvIncrement.y));
-            //
-            //     // Generate a tangent space normal using the slope along the U and V axis.
-            //     float3 normalTS = float3(
-            //         (left - right) / (uvIncrement.x * 2),
-            //         (down - up) / (uvIncrement.y * 2),
-            //         1
-            //     );
-            //
-            //     normalTS.xy *= _NormalStrength; // Adjust the XY channels to create stronger or weaker normals.
-            //     return normalize(normalTS);
-            // }
-
-            float4 getTexel(float2 p)
-            {
-                float2 newUV = p * _HeightMap_Width + 0.5;
-
-                float2 i = floor(newUV);
-                float2 f = frac(newUV);
-                newUV = i + f * f * (3.0f - 2.0f * f);
-
-                newUV = (newUV - 0.5) / _HeightMap_Width;
-                return SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, newUV);
-            }
-
-            // from http://www.java-gaming.org/index.php?topic=35123.0
-            float4 cubic(float v){
-                float4 n = float4(1.0, 2.0, 3.0, 4.0) - v;
-                float4 s = n * n * n;
-                float x = s.x;
-                float y = s.y - 4.0 * s.x;
-                float z = s.z - 4.0 * s.y + 6.0 * s.x;
-                float w = 6.0 - x - y - z;
-                return float4(x, y, z, w) * (1.0/6.0);
-            }
-
-            float4 textureBicubic(SamplerState samplerTex, float2 texCoords)
-            {
-                float2 texSize = float2(_HeightMap_Width, _HeightMap_Height);
-                float2 invTexSize = 1.0 / texSize;
-
-                texCoords = texCoords * texSize - 0.5;
-               
-                float2 fxy = frac(texCoords);
-                texCoords -= fxy;
-
-                float4 xcubic = cubic(fxy.x);
-                float4 ycubic = cubic(fxy.y);
-
-                float4 c = texCoords.xxyy + float2 (-0.5, +1.5).xyxy;
-                
-                float4 s = float4(xcubic.xz + xcubic.yw, ycubic.xz + ycubic.yw);
-                float4 offset = c + float4 (xcubic.yw, ycubic.yw) / s;
-                
-                offset *= invTexSize.xxyy;
-                
-                float4 sample0 = _HeightMap.Sample(samplerTex, offset.xz);
-                float4 sample1 = _HeightMap.Sample(samplerTex, offset.yz);
-                float4 sample2 = _HeightMap.Sample(samplerTex, offset.xw);
-                float4 sample3 = _HeightMap.Sample(samplerTex, offset.yw);
-
-                float sx = s.x / (s.x + s.y);
-                float sy = s.z / (s.z + s.w);
-
-                return lerp(
-                   lerp(sample3, sample2, sx),
-                   lerp(sample1, sample0, sx),
-                   sy
-                );
-            }
-
-            float3 GenerateNormalFromHeightMap(float2 uv)
-            {
-                float2 uvIncrement = _HeightMap_TexelSize * 2.0f;
-                // float2 uvIncrement = float2(0.01, 0.01);
-                // Sample the height from adjacent pixels.
-                float left = SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, uv + float2(-1, 0) * uvIncrement.x).r;
-                float right = SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, uv + float2(1, 0) * uvIncrement.x).r;
-                float down = SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, uv + float2(0, -1) * uvIncrement.y).r;
-                float up = SAMPLE_TEXTURE2D(_HeightMap, sampler_HeightMap, uv + float2(0, 1) * uvIncrement.y).r;
-
-                // float left = textureBicubic(sampler_HeightMap, uv + float2(-1, 0) * uvIncrement.x).r * _HeightMapAltitude;
-                // float right = textureBicubic(sampler_HeightMap, uv + float2(1, 0) * uvIncrement.x).r * _HeightMapAltitude;
-                // float down = textureBicubic(sampler_HeightMap, uv + float2(0, -1) * uvIncrement.x).r * _HeightMapAltitude;
-                // float up = textureBicubic(sampler_HeightMap, uv + float2(0, 1) * uvIncrement.x).r * _HeightMapAltitude;
-                
-                // float left = getTexel(uv + float2(-1, 0) * uvIncrement.x).r * _HeightMapAltitude;
-                // float right = getTexel(uv + float2(1, 0) * uvIncrement.x).r * _HeightMapAltitude;
-                // float down = getTexel(uv + float2(a0, -1) * uvIncrement.y).r * _HeightMapAltitude;
-                // float up = getTexel(uv + float2(0, 1) * uvIncrement.y).r * _HeightMapAltitude;
-                
-                // Generate a tangent space normal using the slope along the U and V axis.
-                float3 normalTS = float3(
-                    (left - right) / (uvIncrement.x),
-                    (down - up) / (uvIncrement.y),
-                    1
-                );
-                
-                normalTS.xy *= _SimulationNormalStrength; // Adjust the XY channels to create stronger or weaker normals.
-                return normalize(normalTS);
-
-                // float original = getTexel(uv).r;
-                // // float left = getTexel(uv + float2(-1, 0) * uvIncrement.x).r;
-                // float right = getTexel(uv + float2(1, 0) * uvIncrement.x).r;
-                // // float down = getTexel(uv + float2(0, -1) * uvIncrement.y).r;
-                // float up = getTexel(uv + float2(0, 1) * uvIncrement.y).r;
-                //
-                // // float3 va = normalize(float3(1.0 * uvIncrement.x, left - right, 0.0f));
-                // // float3 vb = normalize(float3(0.0, up - down, 1.0 * uvIncrement.y));
-                // float3 va = float3(1.0 * uvIncrement.x, 0.0f, right - original);
-                // float3 vb = float3(0.0, 1.0 * uvIncrement.y, up - original);
-                // return normalize(cross(va, vb) * _NormalStrength);
-
-                // Sample the height from adjacent pixels.
-                // float left = getTexel(uv + float2(-1, 0) * uvIncrement.x).g;
-                // float right = getTexel(uv + float2(1, 0) * uvIncrement.x).g;
-                // float down = getTexel(uv + float2(0, -1) * uvIncrement.y).g;
-                // float up = getTexel(uv + float2(0, 1) * uvIncrement.y).g;
-
-                // float left = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, uv + float2(-1, 0) * uvIncrement.x, 0).r * _HeightMapAltitude;
-                // float right = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap,uv + float2(1, 0) * uvIncrement.x, 0).r * _HeightMapAltitude;
-                // float down = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap,uv + float2(0, -1) * uvIncrement.y, 0).r * _HeightMapAltitude;
-                // float up = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap,uv + float2(0, 1) * uvIncrement.y, 0).r * _HeightMapAltitude;
-                
-                // float3 normalTS = float3(left - right, down - up, 1.0f);
-                
-                // Generate a tangent space normal using the slope along the U and V axis.
-                // float3 normalTS = float3(
-                //     (left - right) / (uvIncrement.x * 2),
-                //     (down - up) / (uvIncrement.y * 2),
-                //     1
-                // );
-                //
-                // normalTS.xy *= _NormalStrength; // Adjust the XY channels to create stronger or weaker normals.
-                // return normalize(normalTS);
-            }
-
-            // float wave(float2 position, float2 direction, float amplitude, float wavelength, float speed, float time) {
-            //     float frequency = TWO_PI / wavelength;
-            //     float phase = speed * frequency;
-            //     float theta = dot(direction, position);
-            //     return amplitude * sin(theta * frequency + time * phase);
-            // }
-            
-            float wave(float2 position, float2 direction, float amplitude, float wavelength, float speed, float time) {
-                float frequency = TWO_PI / wavelength;
-                float phase = speed * frequency;
-                float theta = dot(direction, position);
-                return amplitude * sin(frequency * (theta - time * phase));
-            }
-
-            float waveHeight(float2 position)
-            {
-                float height = 0.0;
-                height += wave(position, float2(1, 0), 0.01f, 4.0f, 1, _Time.x);
-                height += wave(position, float2(0, 1), 0.01f, 2.0f, 1, _Time.x);
-                
-                return height;
-            }
-
-            float dWavedx(float2 position, float2 direction, float amplitude, float wavelength, float speed, float time) {
-                float frequency = TWO_PI / wavelength;
-                float phase = speed * frequency;
-                float theta = dot(direction, position);
-                float A = amplitude * direction.x * frequency;
-                return A * cos(theta * frequency + time * phase);
-            }
-            
-            float dWavedy(float2 position, float2 direction, float amplitude, float wavelength, float speed, float time) {
-                float frequency = TWO_PI / wavelength;
-                float phase = speed * frequency;
-                float theta = dot(direction, position);
-                float A = amplitude * direction.y * frequency;
-                return A * cos(theta * frequency + time * phase);
-            }
-
-            float3 waveNormal(float2 position) {
-                float dx = 0.0;
-                float dy = 0.0;
-                dx += dWavedx(position, float2(1, 0), 0.05f, 1.0f, 1, _Time.x);
-                dy += dWavedy(position, float2(1, 0), 0.05f, 1.0f, 1, _Time.x);
-                
-                // dx += dWavedx(position, float2(0, 1), 0.05f, 1.0f, 1, _Time.x);
-                // dy += dWavedy(position, float2(0, 1), 0.05f, 1.0f, 1, _Time.x);
-                
-                float3 n = float3(-dx, 1.0, -dy);
-                return normalize(n);
-            }
 
             TessellationControlPoint Vertex(Attributes input)
             {
@@ -401,6 +201,8 @@ Shader "Custom/TessellationLit"
                 output.tangentWS = float4(normalInputs.tangentWS, input.tangentOS.w); // tangent.w contains bitangent multiplier;
                 output.uv = input.uv;
                 output.uv_MainTex = TRANSFORM_TEX(input.uv, _MainTex);
+                output.lightMap = input.lightMap;
+                
                 return output;
             }
             
@@ -444,18 +246,9 @@ Shader "Custom/TessellationLit"
                 BARYCENTRIC_INTERPOLATE(uv);
                 BARYCENTRIC_INTERPOLATE(uv_MainTex);
                 
-                // noise.octaves = 1;
-                // noise.frequency = 1.0f;
-                // output.positionWS += normalWS * fnlGetNoise2D(noise, output.positionWS.x, output.positionWS.z  + _Time.y / 5) / 8;
-                // noise.octaves = 5;
-                // noise.frequency = 0.5f;
-                // output.positionWS += normalWS * fnlGetNoise2D(noise, output.positionWS.x + _Time.y / 5, output.positionWS.z) / 8;
-                // output.normalWS = waveNormal(output.positionWS.xz);
-                
                 // Apply height map.
                 const float height = SAMPLE_TEXTURE2D_LOD(_HeightMap, sampler_HeightMap, output.uv, 0).r * _HeightMapAltitude;
                 output.positionWS += output.normalWS * height;
-                output.positionWS += waveHeight(output.positionWS.xz);
                 
                 output.normalWS = normalWS;
                 output.tangentWS = float4(tangentWS, patch[0].tangentWS.w);
@@ -463,21 +256,13 @@ Shader "Custom/TessellationLit"
                 output.positionOAS *= scale; // OAS = Object Aligned Space. Apply only the scale to the object space vertex in order to compensate for rotation.
                 output.fogCoords = ComputeFogFactor(output.positionCS.z);
                 output.viewDir = GetWorldSpaceNormalizeViewDir(output.positionWS);
+
+                float4 lightMap;
+                BARYCENTRIC_INTERPOLATE_NOOUT(lightMap);
+                OUTPUT_LIGHTMAP_UV(lightMap, unity_LightmapST, output.lightmapUV);
+                OUTPUT_SH(output.normalWS.xyz, output.vertexSH);
                 
                 return output;
-            }
-
-            float3 FlowUVW(float2 uv, float2 flowVector, float2 jump, float flowOffset, float tiling, float time, bool flowB) {
-                float phaseOffset = flowB ? 0.5 : 0;
-                float progress = frac(time + phaseOffset);
-                float3 uvw;
-                
-                uvw.xy = uv - flowVector * (progress + flowOffset);
-                uvw.xy *= tiling;
-                uvw.xy += phaseOffset;
-                uvw.xy += (time - progress) * jump;
-                uvw.z = 1 - abs(1 - 2 * progress);
-	            return uvw;
             }
             
             float4 Fragment(Interpolators input) : SV_Target
@@ -521,7 +306,6 @@ Shader "Custom/TessellationLit"
                     float4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv_MainTex);
                 #endif
                 color *= _BaseColor;
-
                 
                 // Fog Reference: https://github.com/keijiro/KinoFog/blob/master/Assets/Kino/Fog/Shader/Fog.shader
                 // https://www.reddit.com/r/Unity3D/comments/7wm02n/perfect_fog_for_your_game_trouble_matching_fog/
@@ -543,20 +327,20 @@ Shader "Custom/TessellationLit"
                     color = lerp(_WireframeColor, color, minBary);
                 #endif
                 
-                float3 flow = SAMPLE_TEXTURE2D(_WaterFlowMap, sampler_WaterFlowMap, input.uv).rgb;
+                float3 flow = SAMPLE_TEXTURE2D(_WaterFlowMap, sampler_WaterFlowMap, input.uv * _Tiling).rgb;
 			    flow.xy = flow.xy * 2 - 1; // Map is in 0-1 range. We have to map it back to -1-1 range using *2-1.
                 flow *= _FlowStrength;
-                float noise = SAMPLE_TEXTURE2D(_WaterFlowMap, sampler_WaterFlowMap, input.uv).a; // Greyscale noise in alpha channel.
+                float noise = SAMPLE_TEXTURE2D(_WaterFlowMap, sampler_WaterFlowMap, input.uv * _Tiling).a; // Greyscale noise in alpha channel.
 			    float time = _Time.x * _Speed + noise;
                 float2 jump = float2(_UJump, _VJump);
                 float3 flowUVW_A = FlowUVW(input.uv, flow.xy, jump, _FlowOffset, _Tiling, time, false);
                 float3 flowUVW_B = FlowUVW(input.uv, flow.xy, jump, _FlowOffset, _Tiling, time, true);
                 
                 float3 waterNormal1_A = UnpackNormalScale(SAMPLE_TEXTURE2D(_WaterNormal1, sampler_WaterNormal1, flowUVW_A.xy * _NormalMapSize), _NormalMapStrength) * flowUVW_A.z;
-                float3 waterNormal2_A = UnpackNormalScale(SAMPLE_TEXTURE2D(_WaterNormal2, sampler_WaterNormal2, flowUVW_A.xy * _NormalMapSize - time / 2), _NormalMapStrength) * flowUVW_A.z;
+                float3 waterNormal2_A = UnpackNormalScale(SAMPLE_TEXTURE2D(_WaterNormal2, sampler_WaterNormal2, flowUVW_A.xy * _NormalMapSize - time * 2), _NormalMapStrength) * flowUVW_A.z;
                 
                 float3 waterNormal1_B = UnpackNormalScale(SAMPLE_TEXTURE2D(_WaterNormal1, sampler_WaterNormal1, flowUVW_B.xy * _NormalMapSize), _NormalMapStrength) * flowUVW_B.z;
-                float3 waterNormal2_B = UnpackNormalScale(SAMPLE_TEXTURE2D(_WaterNormal2, sampler_WaterNormal2, flowUVW_B.xy * _NormalMapSize - time / 2), _NormalMapStrength) * flowUVW_B.z;
+                float3 waterNormal2_B = UnpackNormalScale(SAMPLE_TEXTURE2D(_WaterNormal2, sampler_WaterNormal2, flowUVW_B.xy * _NormalMapSize - time * 2), _NormalMapStrength) * flowUVW_B.z;
                 // float3 normalTS = BlendNormal(BlendNormal(waterNormal1_A, waterNormal1_B), BlendNormal(waterNormal2_A, waterNormal2_B)) * flow.z;
                 float3 normalTS = ((waterNormal1_A + waterNormal1_B) + (waterNormal2_A + waterNormal2_B)) * flow.z;
                 normalTS = BlendNormal(normalTS, GenerateNormalFromHeightMap(input.uv));
@@ -569,6 +353,7 @@ Shader "Custom/TessellationLit"
                 lightingInput.normalWS = normalWS;
                 lightingInput.viewDirectionWS = input.viewDir;
                 lightingInput.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
+                lightingInput.bakedGI = SAMPLE_GI(input.lightmapUV, input.vertexSH, lightingInput.normalWS);
 
                 SurfaceData surfaceInput = (SurfaceData)0; // Holds info about the surface material's physical properties (e.g. color).
                 surfaceInput.albedo = color.rgb;

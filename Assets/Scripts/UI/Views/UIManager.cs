@@ -30,7 +30,7 @@ namespace DeepDreams.UI.Views
 
         private void Start()
         {
-            _views = Resources.FindObjectsOfTypeAll(typeof(View)) as View[];
+            _views = FindObjectsOfType(typeof(View), true) as View[];
 
             if (_views == null)
             {

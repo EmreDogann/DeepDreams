@@ -9,13 +9,6 @@
       },
       "hash": "d50800637515f0451091b69d92333741a20ebb1b"
     },
-    "com.prenominal.realtimecsg": {
-      "version": "https://github.com/LogicalError/realtime-CSG-for-unity.git",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "9f25003116f429aede023ecbc8c83d9dc065d767"
-    },
     "com.solidalloy.type-references": {
       "version": "2.16.0",
       "depth": 0,
@@ -124,6 +117,17 @@
       "depth": 2,
       "source": "registry",
       "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.probuilder": {
+      "version": "5.0.6",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.settings-manager": "1.0.3",
+        "com.unity.modules.physics": "1.0.0",
+        "com.unity.modules.imgui": "1.0.0"
+      },
       "url": "https://packages.unity.com"
     },
     "com.unity.recorder": {

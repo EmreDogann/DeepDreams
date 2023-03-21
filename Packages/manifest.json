@@ -1,7 +1,6 @@
 {
   "dependencies": {
     "com.domybest.mybox": "https://github.com/Deadcows/MyBox.git",
-    "com.prenominal.realtimecsg": "https://github.com/LogicalError/realtime-CSG-for-unity.git",
     "com.solidalloy.type-references": "2.16.0",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.animation.rigging": "1.1.1",
@@ -9,6 +8,7 @@
     "com.unity.collab-proxy": "1.17.7",
     "com.unity.ide.rider": "3.0.18",
     "com.unity.inputsystem": "1.4.4",
+    "com.unity.probuilder": "5.0.6",
     "com.unity.recorder": "3.0.3",
     "com.unity.render-pipelines.universal": "12.1.8",
     "com.unity.sequences": "1.0.4",

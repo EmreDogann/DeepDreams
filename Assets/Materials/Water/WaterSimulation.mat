@@ -26,9 +26,9 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _A: 0.37372193
+    - _A: 0.49922696
     - _Amplitude: 3
-    - _Attenuation: 0.98
+    - _Attenuation: 0.965
     - _DeltaUV: 1
     - _S2: 0.372
     - _UVScale: 1

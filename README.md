@@ -1,5 +1,5 @@
 # Deep Dreams
-A puzzle/mystery Horror game made in Unity.
+A Horror game made in Unity.
 
 # Requirements
 - Unity 2021.3.16f1
@@ -7,7 +7,6 @@ A puzzle/mystery Horror game made in Unity.
 # Third-Party Assets
 ## Required (All free)
 - [MyBox](https://github.com/Deadcows/MyBox) - Unity Attribute extensions
-- [Realtime-CSG](https://github.com/LogicalError/realtime-CSG-for-unity/) - CSG tool used for level design
 - [TypeReference For Unity](https://github.com/SolidAlloy/ClassTypeReference-for-Unity) - Used for C# reflection.
 
 ## Optional (Used for development purposes)
