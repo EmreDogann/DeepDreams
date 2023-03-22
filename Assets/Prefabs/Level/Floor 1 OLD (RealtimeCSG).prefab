@@ -4562,7 +4562,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5063757230214543797}
   m_Layer: 6
-  m_Name: Floor 1 OLD
+  m_Name: Floor 1 OLD (RealtimeCSG)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

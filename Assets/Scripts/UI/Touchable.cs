@@ -13,7 +13,7 @@ namespace DeepDreams.UI
 #if UNITY_EDITOR
     // Removes all the inspector UI for this component so it appears blank.
     [CustomEditor(typeof(Touchable))]
-    public class TouchableEditor : Editor
+    public class TouchableEditor : UnityEditor.Editor
     {
         private SerializedProperty _raycastTargetBool;
 

@@ -13,6 +13,8 @@ namespace DeepDreams.Player
         [SerializeField] private float walkBackSpeedMultiplier = 0.8f;
         [SerializeField] private float walkStride = 1.0f;
         [SerializeField] private float gravity = -9.81f;
+        [SerializeField] private float groundedCheckRadius = 0.2f;
+        [SerializeField] private float edgeSlideSpeed = 5.0f;
 
         private PlayerBlackboard _blackboard;
         private CharacterController _playerController;
@@ -22,6 +24,10 @@ namespace DeepDreams.Player
 
         private Vector2 _currentMoveDir;
         private Vector2 _currentMoveDirVelocity;
+
+        private Vector3 _edgeSlideMovement;
+        private Vector3 _edgeHitPoint;
+        private bool _wasGrounded;
 
         private void Awake()
         {
@@ -51,8 +57,10 @@ namespace DeepDreams.Player
 
         private void MovePlayer()
         {
-            _blackboard.IsGrounded = _playerController.isGrounded;
-            if (_blackboard.IsGrounded) _velocityY = 0.0f;
+            _wasGrounded = _blackboard.IsGrounded;
+            _blackboard.IsGrounded = CheckGrounded();
+
+            if (!_blackboard.IsGrounded && _wasGrounded) _velocityY = 0.0f;
 
             Vector2 targetMoveVector = _blackboard.targetMoveDir *
                                        (_blackboard.MoveSpeed * (_blackboard.IsMovingBackward ? walkBackSpeedMultiplier : 1.0f));
@@ -60,8 +68,42 @@ namespace DeepDreams.Player
 
             _velocityY += gravity * Time.deltaTime; // acceleration = meters per second **squared**.
             _velocity = transform.forward * _currentMoveDir.y + transform.right * _currentMoveDir.x + Vector3.up * _velocityY;
+            _velocity += _edgeSlideMovement;
 
             _playerController.Move(_velocity * Time.deltaTime);
+        }
+
+        private bool CheckGrounded()
+        {
+            float floorDistanceFromFoot = _playerController.stepOffset;
+            _edgeSlideMovement = Vector2.zero;
+
+            // Check if grounded with edge tolerance.
+            if (Physics.SphereCast(transform.position + Vector3.up * (groundedCheckRadius + 0.01f), groundedCheckRadius, Vector3.down,
+                    out RaycastHit _, floorDistanceFromFoot + (groundedCheckRadius + 0.01f)))
+            {
+                // From: https://forum.unity.com/threads/charactercontroller-and-walking-down-a-stairs.101859/
+                // Fixes isGrounded not working when going down stairs/slopes when setting y velocity to 0.
+                _velocityY = -_playerController.stepOffset / Time.unscaledDeltaTime;
+
+                return true;
+            }
+
+            // If the player collider is floating off but still touching the edge, apply a movement vector to slide the player off the edge.
+            if (_playerController.isGrounded)
+            {
+                Vector3 edgeMovement = transform.position - _edgeHitPoint;
+                edgeMovement.y = 0.0f;
+
+                _edgeSlideMovement = edgeMovement.normalized * edgeSlideSpeed;
+            }
+
+            return false;
+        }
+
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
+            _edgeHitPoint = hit.point;
         }
     }
 }

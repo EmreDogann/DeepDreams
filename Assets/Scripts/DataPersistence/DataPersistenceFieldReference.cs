@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using DeepDreams.DataPersistence.Data;
 
-namespace DeepDreams.UI
+namespace DeepDreams.DataPersistence
 {
     [Serializable]
     public class DataPersistenceFieldReference<T> where T : PersistentData

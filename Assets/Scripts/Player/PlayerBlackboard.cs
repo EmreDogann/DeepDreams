@@ -1,5 +1,6 @@
 ﻿using System;
 using DeepDreams.Player.StateMachine.Simple;
+using MyBox;
 using UnityEngine;
 
 namespace DeepDreams.Player
@@ -10,7 +11,7 @@ namespace DeepDreams.Player
         [HideInInspector] public Vector2 targetMoveDir;
         [HideInInspector] public CharacterController _Controller;
 
-        [HideInInspector] public PlayerState currentPlayerState;
+        [ReadOnly] public PlayerState currentPlayerState;
 
         // --- Jumping ---
         public bool IsGrounded { get; set; }

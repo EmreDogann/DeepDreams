@@ -1,7 +1,8 @@
-﻿using UnityEditor;
+﻿using DeepDreams.DataPersistence;
+using UnityEditor;
 using UnityEngine;
 
-namespace DeepDreams.UI.Editor
+namespace DataPersistence.Editor
 {
     [CustomPropertyDrawer(typeof(DataPersistenceFieldReference<>))]
     public class DataPersistenceFieldReferenceDrawer : PropertyDrawer
