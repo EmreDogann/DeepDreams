@@ -1,9 +1,13 @@
 # Deep Dreams
-A Horror game made in Unity. A short story about a person's other self and the struggle that emerges in times of despair.
-
-![...](https://user-images.githubusercontent.com/48212096/227378812-fc07e40f-901a-4dc3-9e88-4cafe4343edb.png)
-
-**Currently a work-in-progress.**
+<p align="center">
+  A Horror game made in Unity. A short story about a person's other self and the struggle that emerges in times of despair.
+  <br/>
+  <br/>
+  <img src="https://user-images.githubusercontent.com/48212096/227379031-3bf63f1b-a2f5-4a99-8763-d07aced6adc4.png" width="750" height="750">
+  <br/>
+  <br/>
+  <b>Currently a work-in-progress.</b>
+</p>
 
 # Requirements
 - Unity 2021.3.16f1
