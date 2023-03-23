@@ -17,7 +17,6 @@
 - [TypeReference For Unity](https://github.com/SolidAlloy/ClassTypeReference-for-Unity) - Used for C# reflection.
 
 ## Optional - Used for (tool) development purposes
-Not using these packages might cause some errors in the editor but is not used for game/logic code.
 - [Hierarchy Dectorator](https://github.com/WooshiiDev/HierarchyDecorator) - Cosmetic changes to hierarchy tab
 - [Debug Drawing Extensions](https://assetstore.unity.com/packages/tools/debug-drawing-extension-11396) - Used for debugging.
 - [DebugGUI Graph](https://assetstore.unity.com/packages/tools/gui/debuggui-graph-139275) - Used for debugging.
