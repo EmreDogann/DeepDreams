@@ -37,10 +37,6 @@ namespace DeepDreams.Player.Camera
         [Tooltip("The time (x-axis value) on the Y Motion curve which represents when the footstep occurs.")]
         [SerializeField] private float stepTime;
 
-        [Separator("Stabilization")]
-        [SerializeField] private bool enableStabilization = true;
-        [ConditionalField("enableStabilization", false, true)] [SerializeField] private float stabilizationDistance = 5.0f;
-
         [Separator("Debugging")]
         [SerializeField] private bool enableDebugging;
         private float _motionAmplitudeMultiplier;

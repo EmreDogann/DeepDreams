@@ -32,6 +32,7 @@ namespace DeepDreams.Player
         {
             _blackboard = GetComponent<PlayerBlackboard>();
             _blackboard.OnStrideChange += OnStrideChange;
+            _blackboard.OnStride += InteractSurface;
 
             footstepMesh.SetActive(false);
             footstepMaterial = footstepMesh.GetComponent<MeshRenderer>().sharedMaterial;
@@ -41,6 +42,7 @@ namespace DeepDreams.Player
         private void OnDestroy()
         {
             _blackboard.OnStrideChange -= OnStrideChange;
+            _blackboard.OnStride -= InteractSurface;
         }
 
         private void LateUpdate()
@@ -64,7 +66,7 @@ namespace DeepDreams.Player
             _prevStridePos = transform.position;
             _blackboard.StrideDistance = 0;
             _blackboard.OnStride?.Invoke();
-            InteractSurface();
+            // InteractSurface();
 
             if (_coroutine != null) StopCoroutine(_coroutine);
             _coroutine = StartCoroutine(ToggleFootstep());

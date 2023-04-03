@@ -1,4 +1,6 @@
-﻿namespace DeepDreams.Player.StateMachine.Simple.States
+﻿using DeepDreams.ThirdPartyAssets.GG_Camera_Shake.Runtime;
+
+namespace DeepDreams.Player.StateMachine.Simple.States
 {
     public class Idle : IState
     {
@@ -25,6 +27,20 @@
         {
             // Debug.Log("Idle Enter");
             _blackboard.MoveSpeed = 0.0f;
+
+            PlayerState previousState = _stateMachine.GetPreviousStateType();
+
+            if (previousState == PlayerState.Walking || previousState == PlayerState.Running)
+            {
+                _blackboard.OnStride.Invoke();
+
+                if (previousState == PlayerState.Running)
+                {
+                    if (!CameraShaker.Contains(_blackboard.movingStopCameraAnimation))
+                        CameraShaker.Shake(_blackboard.movingStopCameraAnimation);
+                    else _blackboard.movingStopCameraAnimation.Initialize();
+                }
+            }
         }
 
         public void OnExit()

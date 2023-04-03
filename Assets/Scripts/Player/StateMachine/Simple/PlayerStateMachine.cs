@@ -58,7 +58,17 @@ namespace DeepDreams.Player.StateMachine.Simple
         private void Update()
         {
             _stateMachine.Tick();
-            _blackboard.currentPlayerState = _stateMachine.GetStateType();
+            _blackboard.currentPlayerState = _stateMachine.GetCurrentStateType();
+        }
+
+        public PlayerState GetCurrentStateType()
+        {
+            return _stateMachine.GetCurrentStateType();
+        }
+
+        public PlayerState GetPreviousStateType()
+        {
+            return _stateMachine.GetPreviousStateType();
         }
 
         private bool IsGrounded()

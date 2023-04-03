@@ -18,12 +18,12 @@ namespace DeepDreams.Player.Camera
         [Space]
         [OverrideLabel("X Amplitude")] public float xCurveAmplitude = 0.015f;
         [OverrideLabel("Y Amplitude")] public float yCurveAmplitude = 0.015f;
-        [OverrideLabel("Y Amplitude")] public float zCurveAmplitude = 0.015f;
+        [OverrideLabel("Z Amplitude")] public float zCurveAmplitude = 0.015f;
 
         [Space]
         [OverrideLabel("X Timescale")] public float xCurveTimescale = 1.0f;
         [OverrideLabel("Y Timescale")] public float yCurveTimescale = 1.0f;
-        [OverrideLabel("Y Timescale")] public float zCurveTimescale = 1.0f;
+        [OverrideLabel("Z Timescale")] public float zCurveTimescale = 1.0f;
 
         [HideInInspector] public int invert = 1;
 

@@ -46,10 +46,27 @@ namespace DeepDreams.Player.Camera
         {
             _time += deltaTime;
 
-            if (motionCurveParams.enable && !motionCurveParams.IsFinished(_time)) _currentDisplacement.position += EvaluateMotion(_time);
-            if (tiltCurveParams.enable && !tiltCurveParams.IsFinished(_time)) _currentDisplacement.eulerAngles += EvaluateTilt(_time);
+            bool isAnimFinished = true;
 
-            if (motionCurveParams.IsFinished(_time) && tiltCurveParams.IsFinished(_time)) IsFinished = true;
+            if (motionCurveParams.enable)
+            {
+                if (!motionCurveParams.IsFinished(_time))
+                {
+                    _currentDisplacement.position += EvaluateMotion(_time);
+                    isAnimFinished = false;
+                }
+            }
+
+            if (tiltCurveParams.enable)
+            {
+                if (!tiltCurveParams.IsFinished(_time))
+                {
+                    _currentDisplacement.eulerAngles += EvaluateTilt(_time);
+                    isAnimFinished = false;
+                }
+            }
+
+            if (isAnimFinished) IsFinished = true;
 
             // ResetPosition();
         }
@@ -58,13 +75,12 @@ namespace DeepDreams.Player.Camera
         {
             Vector3 pos = Vector3.zero;
 
-            pos.x = motionCurveParams.xCurve.Evaluate(time) * motionCurveParams.invert * motionCurveParams.xCurveAmplitude -
-                    _currentDisplacement.position.x;
-            pos.y = motionCurveParams.yCurve.Evaluate(time) * motionCurveParams.invert * motionCurveParams.yCurveAmplitude -
-                    _currentDisplacement.position.y;
-            pos.z = motionCurveParams.zCurve.Evaluate(time) * motionCurveParams.invert * motionCurveParams.zCurveAmplitude -
-                    _currentDisplacement.position.z;
-
+            pos.x = motionCurveParams.xCurve.Evaluate(time * motionCurveParams.xCurveTimescale) * motionCurveParams.invert *
+                motionCurveParams.xCurveAmplitude - _currentDisplacement.position.x;
+            pos.y = motionCurveParams.yCurve.Evaluate(time * motionCurveParams.yCurveTimescale) * motionCurveParams.invert *
+                motionCurveParams.yCurveAmplitude - _currentDisplacement.position.y;
+            pos.z = motionCurveParams.zCurve.Evaluate(time * motionCurveParams.zCurveTimescale) * motionCurveParams.invert *
+                motionCurveParams.zCurveAmplitude - _currentDisplacement.position.z;
 
             return pos;
         }
@@ -74,14 +90,11 @@ namespace DeepDreams.Player.Camera
             Vector3 rot = Vector3.zero;
 
             rot.x = tiltCurveParams.xCurve.Evaluate(time * tiltCurveParams.xCurveTimescale) * tiltCurveParams.invert *
-                    tiltCurveParams.xCurveAmplitude -
-                    _currentDisplacement.eulerAngles.x;
+                tiltCurveParams.xCurveAmplitude - _currentDisplacement.eulerAngles.x;
             rot.y = tiltCurveParams.yCurve.Evaluate(time * tiltCurveParams.yCurveTimescale) * tiltCurveParams.invert *
-                    tiltCurveParams.yCurveAmplitude -
-                    _currentDisplacement.eulerAngles.y;
+                tiltCurveParams.yCurveAmplitude - _currentDisplacement.eulerAngles.y;
             rot.z = tiltCurveParams.zCurve.Evaluate(time * tiltCurveParams.zCurveTimescale) * tiltCurveParams.invert *
-                    tiltCurveParams.zCurveAmplitude -
-                    _currentDisplacement.eulerAngles.z;
+                tiltCurveParams.zCurveAmplitude - _currentDisplacement.eulerAngles.z;
 
             return rot;
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 // From: https://www.youtube.com/watch?v=V75hgcsCGOM
 
@@ -8,6 +9,7 @@ namespace DeepDreams.Player.StateMachine.Simple
     public class StateMachine
     {
         private IState _currentState;
+        private IState _prevState;
 
         private readonly Dictionary<Type, List<Transition>> _transitions = new Dictionary<Type, List<Transition>>();
         private List<Transition> _currentTransitions = new List<Transition>();
@@ -17,6 +19,8 @@ namespace DeepDreams.Player.StateMachine.Simple
 
         public void Tick()
         {
+            if (Time.timeScale == 0.0f) return;
+
             Transition transition = GetTransition();
             if (transition != null)
                 SetState(transition.To);
@@ -29,7 +33,9 @@ namespace DeepDreams.Player.StateMachine.Simple
             if (state == _currentState)
                 return;
 
+
             _currentState?.OnExit();
+            _prevState = _currentState == null ? state : _currentState;
             _currentState = state;
 
             _transitions.TryGetValue(_currentState.GetType(), out _currentTransitions);
@@ -39,9 +45,14 @@ namespace DeepDreams.Player.StateMachine.Simple
             _currentState.OnEnter();
         }
 
-        public PlayerState GetStateType()
+        public PlayerState GetCurrentStateType()
         {
             return _currentState.GetStateType();
+        }
+
+        public PlayerState GetPreviousStateType()
+        {
+            return _prevState.GetStateType();
         }
 
         public void AddTransition(IState from, IState to, Func<bool> predicate)

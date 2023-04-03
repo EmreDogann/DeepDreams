@@ -11,10 +11,10 @@ namespace DeepDreams.Player
     [RequireComponent(typeof(PlayerBlackboard))]
     public class PlayerCrouch : MonoBehaviour
     {
-        [SerializeField] private float crouchSpeed = 4.0f;
+        [SerializeField] private float crouchMovementSpeed = 4.0f;
         [SerializeField] private float crouchStride = 0.8f;
         [SerializeField] private float crouchHeight = 1.0f;
-        [SerializeField] private float crouchTransitionSpeed = 10.0f;
+        [SerializeField] private float crouchDuration = 0.13f;
 
         [SerializeField] private Transform cameraHolder;
 
@@ -44,7 +44,7 @@ namespace DeepDreams.Player
         private Vector3 _standingCenter;
         private float _currentHeight;
         private Vector3 _initialCameraPosition;
-        private float crouchingVelocity;
+        private float _crouchingVelocity;
 
         private void Awake()
         {
@@ -72,7 +72,7 @@ namespace DeepDreams.Player
         {
             if (toggleOn)
             {
-                _blackboard.MoveSpeed = crouchSpeed;
+                _blackboard.MoveSpeed = crouchMovementSpeed;
                 _blackboard.PlayerStride = crouchStride;
 
                 cameraCrouchAnimation.Invert(1);
@@ -106,7 +106,7 @@ namespace DeepDreams.Player
                 // _currentHeight = Mathf.Lerp(_currentHeight, _heightTarget, crouchDelta);
                 // float crouchDelta = 1 / 0.3f * Time.deltaTime;
                 // _currentHeight = Mathf.MoveTowards(_currentHeight, _heightTarget, crouchDelta);
-                _currentHeight = Mathf.SmoothDamp(_currentHeight, _heightTarget, ref crouchingVelocity, 0.13f);
+                _currentHeight = Mathf.SmoothDamp(_currentHeight, _heightTarget, ref _crouchingVelocity, crouchDuration);
 
                 SetPlayerHeight(_currentHeight);
 

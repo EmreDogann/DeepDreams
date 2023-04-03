@@ -1,4 +1,5 @@
 ﻿using System;
+using DeepDreams.Player.Camera;
 using DeepDreams.Player.StateMachine.Simple;
 using MyBox;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace DeepDreams.Player
         [HideInInspector] public Vector2 targetMoveDir;
         [HideInInspector] public CharacterController _Controller;
 
+        // For debugging purposes only.
         [ReadOnly] public PlayerState currentPlayerState;
 
         // --- Jumping ---
@@ -42,6 +44,8 @@ namespace DeepDreams.Player
         public Action OnPlayerWalk;
         public Action<bool> OnPlayerCrouch;
         public Action OnPlayerRun;
+
+        public CameraCurveShake movingStopCameraAnimation;
 
         private void Awake()
         {
