@@ -114,6 +114,7 @@ namespace DeepDreams.Player
                 {
                     crouchAnimStarted = true;
                     if (!CameraShaker.Contains(cameraCrouchAnimation)) CameraShaker.Shake(cameraCrouchAnimation);
+                    else cameraCrouchAnimation.Initialize();
                 }
 
                 yield return null;

@@ -27,7 +27,7 @@ namespace DeepDreams.Player.Camera
             tiltCurveParams.Invert(sign);
         }
 
-        public void Initialize(Vector3 cameraPosition, Quaternion cameraRotation)
+        public void Initialize()
         {
             motionCurveParams.Init();
             tiltCurveParams.Init();
@@ -35,6 +35,11 @@ namespace DeepDreams.Player.Camera
             _time = 0.0f;
             _currentDisplacement = Displacement.Zero;
             IsFinished = false;
+        }
+
+        public void Initialize(Vector3 cameraPosition, Quaternion cameraRotation)
+        {
+            Initialize();
         }
 
         public void UpdateShake(float deltaTime, Vector3 cameraPosition, Quaternion cameraRotation)
