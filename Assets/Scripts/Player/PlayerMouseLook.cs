@@ -15,6 +15,7 @@ namespace DeepDreams.Player
 
         [Space]
         [SerializeField] private Transform cameraHolder;
+        [SerializeField] private bool useEditorRotation;
 
         private Vector2 _lookDirection;
         private Vector2 _currentMouseDelta;
@@ -26,6 +27,8 @@ namespace DeepDreams.Player
         private void Awake()
         {
             _onGamePausedEvent = GetComponent<BoolEventListener>();
+
+            if (useEditorRotation) _lookDirection = new Vector2(transform.localEulerAngles.x, transform.localEulerAngles.y);
         }
 
         private void OnEnable()

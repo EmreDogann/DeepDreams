@@ -708,6 +708,8 @@ MonoBehaviour:
   walkBackSpeedMultiplier: 0.7
   walkStride: 1.1
   gravity: -13
+  groundedCheckRadius: 0.2
+  edgeSlideSpeed: 2
 --- !u!114 &3547493809205685611
 MonoBehaviour:
   m_ObjectHideFlags: 0
