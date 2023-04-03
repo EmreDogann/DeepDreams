@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &5090639221820384134
 Transform:
   m_ObjectHideFlags: 0
@@ -133,7 +133,7 @@ Camera:
   m_FOVAxisMode: 1
   m_SensorSize: {x: 1, y: 1}
   m_LensShift: {x: 0, y: 0}
-  m_FocalLength: 0.6516127
+  m_FocalLength: 0.5
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
@@ -215,7 +215,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5440670880542269040}
-  - component: {fileID: 7881703429134701047}
+  - component: {fileID: 6801897735629999823}
+  - component: {fileID: 9130892759280718808}
   m_Layer: 0
   m_Name: Camera Holder
   m_TagString: Untagged
@@ -239,7 +240,7 @@ Transform:
   m_Father: {fileID: 5440670880944876649}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7881703429134701047
+--- !u!114 &6801897735629999823
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -248,12 +249,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 5440670880542269047}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 67c7dff214594cfaa77453ba7ab25fd8, type: 3}
+  m_Script: {fileID: 11500000, guid: deab704e4b63476daa8491dc17222a79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   enable: 1
   headBobSmoothing: 0.1
-  camera: {fileID: 5904995484727186251}
   blackboard: {fileID: 3805997845891940528}
   footstepWalk: {fileID: 11400000, guid: cde037f37c5cf38488543562b852d62f, type: 2}
   footstepRun: {fileID: 11400000, guid: f5bf924cc26d6bc4691c15fcb98800eb, type: 2}
@@ -489,6 +489,20 @@ MonoBehaviour:
   enableStabilization: 0
   stabilizationDistance: 5
   enableDebugging: 0
+--- !u!114 &9130892759280718808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5440670880542269047}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a257897ce04dc64eb5ae266c62846be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraTransform: {fileID: 5904995484727186251}
+  StrengthMultiplier: 1
 --- !u!1 &5440670880944876648
 GameObject:
   m_ObjectHideFlags: 0
@@ -550,7 +564,7 @@ CharacterController:
   m_Radius: 0.4
   m_SlopeLimit: 45
   m_StepOffset: 0.3
-  m_SkinWidth: 0.001
+  m_SkinWidth: 0.04
   m_MinMoveDistance: 0
   m_Center: {x: 0, y: 1, z: 0}
 --- !u!114 &5440670880944876651
@@ -703,7 +717,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5171a0c0796971408eae3678a90cb03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveDamping: 0.07
+  moveDamping: 0.09
   walkSpeed: 2.2
   walkBackSpeedMultiplier: 0.7
   walkStride: 1.1
@@ -727,6 +741,7 @@ MonoBehaviour:
   lookUpLimit: 70
   mouseDamping: 0.02
   cameraHolder: {fileID: 5440670880542269040}
+  useEditorRotation: 1
 --- !u!114 &1349645920
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -744,6 +759,9 @@ MonoBehaviour:
   crouchHeight: 1.3
   crouchTransitionSpeed: 8
   cameraHolder: {fileID: 5440670880542269040}
+  crouchSound: {fileID: 11400000, guid: 619c3684795b14a43a70bfee7f131d49, type: 2}
+  cameraCrouchAnimation: {fileID: 11400000, guid: 73c81d2325f4d614e8057c92bb013810,
+    type: 2}
   collisionDetectionLayerMask:
     serializedVersion: 2
     m_Bits: 64

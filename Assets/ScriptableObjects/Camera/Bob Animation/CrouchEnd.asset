@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5534b74886a47d19b96e9f8306c4d10, type: 3}
+  m_Name: CrouchEnd
+  m_EditorClassIdentifier: 
+  motionCurveParams:
+    enable: 0
+    bobSmoothing: 0.1
+    xCurve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    yCurve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    zCurve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    xCurveAmplitude: 0.015
+    yCurveAmplitude: 0.015
+    zCurveAmplitude: 0.015
+    xCurveTimescale: 1
+    yCurveTimescale: 1
+    zCurveTimescale: 1
+    invert: -1
+  tiltCurveParams:
+    enable: 1
+    bobSmoothing: 0.02
+    xCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0.51756746
+        outSlope: 0.51756746
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0
+        outWeight: 0.73251396
+      - serializedVersion: 3
+        time: 0.15140004
+        value: 0.3984452
+        inSlope: 0.1416978
+        outSlope: 0.1416978
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.37371004
+        outWeight: 0.2237821
+      - serializedVersion: 3
+        time: 0.30411148
+        value: -0.00235188
+        inSlope: -2.802807
+        outSlope: -2.802807
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.5783361
+        outWeight: 0.49319866
+      - serializedVersion: 3
+        time: 0.65422285
+        value: 0
+        inSlope: -0.027243057
+        outSlope: -0.027243057
+        tangentMode: 0
+        weightedMode: 3
+        inWeight: 0.47967067
+        outWeight: 0.40833333
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    yCurve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    zCurve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    xCurveAmplitude: 1.2
+    yCurveAmplitude: 0
+    zCurveAmplitude: 0
+    xCurveTimescale: 1
+    yCurveTimescale: 0
+    zCurveTimescale: 0
+    invert: -1

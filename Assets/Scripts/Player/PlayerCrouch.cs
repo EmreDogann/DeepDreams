@@ -1,4 +1,8 @@
 ﻿using System.Collections;
+using DeepDreams.Audio;
+using DeepDreams.Player.Camera;
+using DeepDreams.ScriptableObjects.Audio;
+using DeepDreams.ThirdPartyAssets.GG_Camera_Shake.Runtime;
 using MyBox;
 using UnityEngine;
 
@@ -13,6 +17,12 @@ namespace DeepDreams.Player
         [SerializeField] private float crouchTransitionSpeed = 10.0f;
 
         [SerializeField] private Transform cameraHolder;
+
+        [Separator("Audio")]
+        [SerializeField] private AudioReference crouchSound;
+
+        [Separator("Animation")]
+        [SerializeField] private CameraCurveShake cameraCrouchAnimation;
 
         [Separator("Collision Settings")]
         [SerializeField] private LayerMask collisionDetectionLayerMask;
@@ -34,6 +44,7 @@ namespace DeepDreams.Player
         private Vector3 _standingCenter;
         private float _currentHeight;
         private Vector3 _initialCameraPosition;
+        private float crouchingVelocity;
 
         private void Awake()
         {
@@ -63,17 +74,24 @@ namespace DeepDreams.Player
             {
                 _blackboard.MoveSpeed = crouchSpeed;
                 _blackboard.PlayerStride = crouchStride;
+
+                cameraCrouchAnimation.Invert(1);
             }
+            else cameraCrouchAnimation.Invert(-1);
 
             if (_checkCollisionCoroutine != null) StopCoroutine(_checkCollisionCoroutine);
             if (_crouchCoroutine != null) StopCoroutine(_crouchCoroutine);
             _crouchCoroutine = StartCoroutine(PerformCrouch(toggleOn));
+
+            AudioManager.instance.PlayOneShot(crouchSound);
         }
 
         private IEnumerator PerformCrouch(bool toggleOn)
         {
             float finalHeightTarget = toggleOn ? crouchHeight : _standingHeight;
             _heightTarget = finalHeightTarget;
+
+            bool crouchAnimStarted = false;
 
             // While we have not reached the target height...
             while (!Mathf.Approximately(finalHeightTarget, _currentHeight))
@@ -84,19 +102,36 @@ namespace DeepDreams.Player
                     _checkCollisionCoroutine = StartCoroutine(CheckHeightClearance());
                 }
 
-                float crouchDelta = crouchTransitionSpeed * Time.deltaTime;
-                _currentHeight = Mathf.Lerp(_currentHeight, _heightTarget, crouchDelta);
+                // float crouchDelta = crouchTransitionSpeed * Time.deltaTime;
+                // _currentHeight = Mathf.Lerp(_currentHeight, _heightTarget, crouchDelta);
+                // float crouchDelta = 1 / 0.3f * Time.deltaTime;
+                // _currentHeight = Mathf.MoveTowards(_currentHeight, _heightTarget, crouchDelta);
+                _currentHeight = Mathf.SmoothDamp(_currentHeight, _heightTarget, ref crouchingVelocity, 0.13f);
 
-                Vector3 halfHeightDifference = new Vector3(0, (_standingHeight - _currentHeight) * 0.5f, 0);
-                Vector3 newCameraPosition = _initialCameraPosition - halfHeightDifference * 2.0f;
+                SetPlayerHeight(_currentHeight);
 
-                cameraHolder.localPosition = newCameraPosition;
-                _playerController.center = _standingCenter - halfHeightDifference;
-                _playerController.height = _currentHeight;
+                if (Mathf.Abs(finalHeightTarget - _currentHeight) < 0.7f && !crouchAnimStarted)
+                {
+                    crouchAnimStarted = true;
+                    if (!CameraShaker.Contains(cameraCrouchAnimation)) CameraShaker.Shake(cameraCrouchAnimation);
+                }
+
                 yield return null;
             }
 
+            SetPlayerHeight(_heightTarget);
+
             _blackboard.IsCrouchingBlocked = false;
+        }
+
+        private void SetPlayerHeight(float height)
+        {
+            Vector3 halfHeightDifference = new Vector3(0, (_standingHeight - height) * 0.5f, 0);
+            Vector3 newCameraPosition = _initialCameraPosition - halfHeightDifference * 2.0f;
+
+            cameraHolder.localPosition = newCameraPosition;
+            _playerController.center = _standingCenter - halfHeightDifference;
+            _playerController.height = height;
         }
 
         private IEnumerator CheckHeightClearance()

@@ -1,18 +1,18 @@
 ﻿using DeepDreams.Player.StateMachine.Simple;
 using DeepDreams.ScriptableObjects.Audio;
+using DeepDreams.ThirdPartyAssets.GG_Camera_Shake.Runtime;
 using MyBox;
 using UnityEngine;
 
 namespace DeepDreams.Player.Camera
 {
-    public class CameraHeadBob : MonoBehaviour
+    public class CameraHeadBob : MonoBehaviour, ICameraShake
     {
         [Separator("General")]
         [SerializeField] private bool enable = true;
 
         [SerializeField] private float headBobSmoothing = 0.1f;
 
-        [SerializeField] private Transform camera;
         [SerializeField] private PlayerBlackboard blackboard;
 
         [Separator("Audio")]
@@ -48,8 +48,6 @@ namespace DeepDreams.Player.Camera
 
         private bool _onStepCalled;
 
-        private Vector3 _startPos;
-        private Quaternion _startRot;
         private int _stepCount;
         private float _targetAmplitudeMultiplier;
         private float _tiltAmplitudeMultiplier;
@@ -60,10 +58,15 @@ namespace DeepDreams.Player.Camera
         private float _xTiltTarget;
         private float _xTiltVelocity;
 
+        private Displacement _currentDisplacement;
+        // ReSharper disable once ConvertToAutoProperty
+        public Displacement CurrentDisplacement => _currentDisplacement;
+        public bool IsFinished { get; private set; }
+
         private void Start()
         {
-            _startPos = camera.localPosition;
-            _startRot = camera.localRotation;
+            CameraShaker.Shake(this);
+            _currentDisplacement = Displacement.Zero;
 
             if (!enableDebugging) return;
 
@@ -76,7 +79,9 @@ namespace DeepDreams.Player.Camera
             DebugGUI.SetGraphProperties("bobbingZTiltEvent", "EventZTilt", -0.25f, 0.25f, 0, new Color(1, 1, 1), false);
         }
 
-        private void Update()
+        public void Initialize(Vector3 cameraPosition, Quaternion cameraRotation) {}
+
+        public void UpdateShake(float deltaTime, Vector3 cameraPosition, Quaternion cameraRotation)
         {
             if (!enable) return;
 
@@ -91,9 +96,9 @@ namespace DeepDreams.Player.Camera
 
                 _onStepCalled = false;
 
-                DebugGUI.Graph("bobbingX", camera.localPosition.x);
-                DebugGUI.Graph("bobbingY", camera.localPosition.y);
-                DebugGUI.Graph("bobbingZTilt", WrapAngle(camera.localEulerAngles.z));
+                DebugGUI.Graph("bobbingX", _currentDisplacement.position.x);
+                DebugGUI.Graph("bobbingY", _currentDisplacement.position.y);
+                DebugGUI.Graph("bobbingZTilt", WrapAngle(_currentDisplacement.eulerAngles.z));
             }
 
             CheckMotion();
@@ -136,9 +141,9 @@ namespace DeepDreams.Player.Camera
             if (!enableDebugging) return;
 
             _onStepCalled = true;
-            DebugGUI.GraphEvent("bobbingXEvent", camera.localPosition.x);
-            DebugGUI.GraphEvent("bobbingYEvent", camera.localPosition.y);
-            DebugGUI.GraphEvent("bobbingZTiltEvent", WrapAngle(camera.localEulerAngles.z));
+            DebugGUI.GraphEvent("bobbingXEvent", _currentDisplacement.position.x);
+            DebugGUI.GraphEvent("bobbingYEvent", _currentDisplacement.position.y);
+            DebugGUI.GraphEvent("bobbingZTiltEvent", WrapAngle(_currentDisplacement.eulerAngles.z));
         }
 
         private void CheckMotion()
@@ -154,11 +159,11 @@ namespace DeepDreams.Player.Camera
 
             _walkingTime = blackboard.StrideDistance / blackboard.PlayerStride;
 
-            camera.localPosition += FootStepMotion(_walkingTime);
+            _currentDisplacement.position += FootStepMotion(_walkingTime);
 
-            if (enableStabilization) camera.LookAt(camera.transform.position + camera.forward * stabilizationDistance);
+            // if (enableStabilization) camera.LookAt(camera.transform.position + camera.forward * stabilizationDistance);
 
-            camera.localRotation *= Quaternion.Euler(FootStepTilt(_walkingTime));
+            _currentDisplacement.eulerAngles += FootStepTilt(_walkingTime);
         }
 
         private Vector3 FootStepMotion(float time)
@@ -172,8 +177,9 @@ namespace DeepDreams.Player.Camera
             _motionAmplitudeMultiplier = Mathf.SmoothDamp(_motionAmplitudeMultiplier, _targetAmplitudeMultiplier,
                 ref _motionAmplitudeMultiplierVelocity, 0.1f);
 
-            pos.y = yMotion.Evaluate(time + stepTime) * yMotionAmplitude * _motionAmplitudeMultiplier - camera.localPosition.y;
-            pos.x = xMotion.Evaluate((time + _stepCount) * 0.5f) * xMotionAmplitude * _motionAmplitudeMultiplier - camera.localPosition.x;
+            pos.y = yMotion.Evaluate(time + stepTime) * yMotionAmplitude * _motionAmplitudeMultiplier - _currentDisplacement.position.y;
+            pos.x = xMotion.Evaluate((time + _stepCount) * 0.5f) * xMotionAmplitude * _motionAmplitudeMultiplier -
+                    _currentDisplacement.position.x;
 
             return pos;
         }
@@ -199,21 +205,23 @@ namespace DeepDreams.Player.Camera
             _tiltAmplitudeMultiplier = Mathf.SmoothDamp(_tiltAmplitudeMultiplier, _targetAmplitudeMultiplier,
                 ref _tiltAmplitudeMultiplierVelocity, 0.1f);
 
-            rot.z = curve.Evaluate((time + _stepCount) * 0.5f) * zTiltAmplitude * _tiltAmplitudeMultiplier - camera.localEulerAngles.z;
+            rot.z = curve.Evaluate((time + _stepCount) * 0.5f) * zTiltAmplitude * _tiltAmplitudeMultiplier -
+                    _currentDisplacement.eulerAngles.z;
 
-            rot.x = Mathf.SmoothDamp(camera.localEulerAngles.x, _xTiltTarget, ref _xTiltVelocity, 0.2f) - camera.localEulerAngles.x;
+            rot.x = Mathf.SmoothDamp(_currentDisplacement.eulerAngles.x, _xTiltTarget, ref _xTiltVelocity, 0.2f) -
+                    _currentDisplacement.eulerAngles.x;
 
             return rot;
         }
 
         private void ResetPosition()
         {
-            if ((camera.localPosition - _startPos).magnitude <= 0.00001f) camera.localPosition = _startPos;
+            if ((_currentDisplacement.position - Vector3.zero).magnitude <= 0.00001f) _currentDisplacement.position = Vector3.zero;
 
-            if (camera.localPosition == _startPos && camera.localRotation == _startRot) return;
+            if (_currentDisplacement.position == Vector3.zero && _currentDisplacement.eulerAngles == Vector3.zero) return;
 
-            camera.localPosition = Vector3.Lerp(camera.localPosition, _startPos, headBobSmoothing);
-            camera.localRotation = Quaternion.Lerp(camera.localRotation, _startRot, headBobSmoothing);
+            _currentDisplacement.position = Vector3.Lerp(_currentDisplacement.position, Vector3.zero, headBobSmoothing);
+            _currentDisplacement.eulerAngles = Vector3.Lerp(_currentDisplacement.eulerAngles, Vector3.zero, headBobSmoothing);
         }
     }
 }
