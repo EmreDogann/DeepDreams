@@ -717,11 +717,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5171a0c0796971408eae3678a90cb03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveDamping: 0.09
+  moveDamping: 0.1
   walkSpeed: 2.2
   walkBackSpeedMultiplier: 0.7
   walkStride: 1.1
-  gravity: -13
+  gravity: -20
   groundedCheckRadius: 0.2
   edgeSlideSpeed: 2
 --- !u!114 &3547493809205685611
@@ -757,7 +757,7 @@ MonoBehaviour:
   crouchMovementSpeed: 1
   crouchStride: 0.8
   crouchHeight: 1.3
-  crouchDuration: 0.13
+  crouchDuration: 0.16
   cameraHolder: {fileID: 5440670880542269040}
   crouchSound: {fileID: 11400000, guid: 619c3684795b14a43a70bfee7f131d49, type: 2}
   cameraCrouchAnimation: {fileID: 11400000, guid: 73c81d2325f4d614e8057c92bb013810,

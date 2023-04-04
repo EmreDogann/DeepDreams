@@ -100,8 +100,8 @@ MonoBehaviour:
     yCurveAmplitude: 0.05
     zCurveAmplitude: 0.08
     xCurveTimescale: 0
-    yCurveTimescale: 2.1
-    zCurveTimescale: 2
+    yCurveTimescale: 2.3
+    zCurveTimescale: 2.2
     invert: 1
   tiltCurveParams:
     enable: 1
@@ -178,7 +178,7 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    xCurveAmplitude: 2
+    xCurveAmplitude: 1.5
     yCurveAmplitude: 0
     zCurveAmplitude: 0.4
     xCurveTimescale: 1.75

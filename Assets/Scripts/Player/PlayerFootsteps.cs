@@ -80,7 +80,7 @@ namespace DeepDreams.Player
             {
                 if (_hit.transform.TryGetComponent(out ISteppable component))
                 {
-                    if (_blackboard.currentPlayerState == PlayerState.Walking || _blackboard.currentPlayerState == PlayerState.Crouching)
+                    if (_blackboard.currentPlayerState == PlayerState.Walking || _blackboard.currentPlayerState == PlayerState.CrouchWalk)
                         AudioManager.instance.PlayOneShot(component.GetSurfaceData().walkSound);
                     else if (_blackboard.currentPlayerState == PlayerState.Running)
                         AudioManager.instance.PlayOneShot(component.GetSurfaceData().runSound);

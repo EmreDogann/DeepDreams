@@ -22,7 +22,16 @@ namespace DeepDreams.Player
         public bool IsMoving { get; set; }
         public bool IsMovingForward { get; set; }
         public bool IsMovingBackward { get; set; }
-        public bool IsCrouching { get; set; }
+        private bool _isCrouching;
+        public bool IsCrouching
+        {
+            get => _isCrouching;
+            set
+            {
+                _isCrouching = value;
+                if (!_isCrouching) OnPlayerUncrouch?.Invoke();
+            }
+        }
         public bool IsCrouchingBlocked { get; set; }
         public bool IsRunning { get; set; }
         public float MoveSpeed { get; set; }
@@ -43,6 +52,7 @@ namespace DeepDreams.Player
         public Action<float> OnStrideChange;
         public Action OnPlayerWalk;
         public Action<bool> OnPlayerCrouch;
+        public Action OnPlayerUncrouch;
         public Action OnPlayerRun;
 
         public CameraCurveShake movingStopCameraAnimation;

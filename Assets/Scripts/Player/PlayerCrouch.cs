@@ -52,6 +52,7 @@ namespace DeepDreams.Player
             _playerController = _blackboard._Controller;
 
             _blackboard.OnPlayerCrouch += HandleCrouch;
+            _blackboard.OnPlayerUncrouch += CheckHeightClearance;
 
             _waitForSeconds = new WaitForSeconds(collisionDetectionCooldown);
         }
@@ -66,6 +67,7 @@ namespace DeepDreams.Player
         private void OnDestroy()
         {
             _blackboard.OnPlayerCrouch -= HandleCrouch;
+            _blackboard.OnPlayerUncrouch -= CheckHeightClearance;
         }
 
         private void HandleCrouch(bool toggleOn)
@@ -99,7 +101,7 @@ namespace DeepDreams.Player
                 if (IsNotStanding && !_blackboard.IsCrouching)
                 {
                     if (_checkCollisionCoroutine != null) StopCoroutine(_checkCollisionCoroutine);
-                    _checkCollisionCoroutine = StartCoroutine(CheckHeightClearance());
+                    _checkCollisionCoroutine = StartCoroutine(CheckHeightClearanceCoroutine());
                 }
 
                 // float crouchDelta = crouchTransitionSpeed * Time.deltaTime;
@@ -135,29 +137,34 @@ namespace DeepDreams.Player
             _playerController.height = height;
         }
 
-        private IEnumerator CheckHeightClearance()
+        private IEnumerator CheckHeightClearanceCoroutine()
         {
             while (IsNotStanding)
             {
-                Vector3 origin = transform.position + new Vector3(0, _currentHeight - crouchCollisionRadius, 0);
-
-                // DebugExtension.DebugWireSphere(origin, Color.red, crouchCollisionRadius, collisionDetectionCooldown);
-                // Debug.DrawLine(origin, origin + Vector3.up * (_standingHeight - _currentHeight), Color.white);
-
-                if (Physics.SphereCast(origin, crouchCollisionRadius, Vector3.up, out _hit, _standingHeight - _currentHeight,
-                        collisionDetectionLayerMask))
-                {
-                    float distanceToCeiling = _hit.point.y - crouchCollisionRadius - origin.y;
-                    _heightTarget = Mathf.Max(_currentHeight + distanceToCeiling - 0.01f, crouchHeight);
-                    _blackboard.IsCrouchingBlocked = true;
-
-                    // Vector3 targetPosDebug = origin + Vector3.up * distanceToCeiling;
-                    // DebugExtension.DebugWireSphere(targetPosDebug, Color.green, crouchCollisionRadius, collisionDetectionCooldown);
-                }
-                else _blackboard.IsCrouchingBlocked = false;
-
+                CheckHeightClearance();
                 yield return _waitForSeconds;
             }
+        }
+
+        private void CheckHeightClearance()
+        {
+            Vector3 origin = transform.position + new Vector3(0, _currentHeight - crouchCollisionRadius, 0);
+
+            // Debug.DrawLine(origin, origin + Vector3.up * (_standingHeight - _currentHeight + 0.01f), Color.white);
+            // DebugExtension.DebugWireSphere(origin + Vector3.up * (_standingHeight - _currentHeight + 0.01f), Color.red,
+            // crouchCollisionRadius, collisionDetectionCooldown);
+
+            if (Physics.SphereCast(origin, crouchCollisionRadius, Vector3.up, out _hit, _standingHeight - _currentHeight + 0.01f,
+                    collisionDetectionLayerMask))
+            {
+                float distanceToCeiling = _hit.point.y - crouchCollisionRadius - origin.y;
+                _heightTarget = Mathf.Max(_currentHeight + distanceToCeiling - 0.01f, crouchHeight);
+                _blackboard.IsCrouchingBlocked = true;
+
+                // Vector3 targetPosDebug = origin + Vector3.up * distanceToCeiling;
+                // DebugExtension.DebugWireSphere(targetPosDebug, Color.green, crouchCollisionRadius, collisionDetectionCooldown);
+            }
+            else _blackboard.IsCrouchingBlocked = false;
         }
     }
 }

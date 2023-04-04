@@ -10,7 +10,8 @@ namespace DeepDreams.Player.StateMachine.Simple
         Walking,
         Running,
         Falling,
-        Crouching
+        CrouchIdle,
+        CrouchWalk
     }
 
     [RequireComponent(typeof(PlayerBlackboard))]
@@ -28,15 +29,26 @@ namespace DeepDreams.Player.StateMachine.Simple
             Walking walking = new Walking(this, _blackboard);
             Running running = new Running(this, _blackboard);
             Falling falling = new Falling(this, _blackboard);
-            Crouching crouching = new Crouching(this, _blackboard);
+            CrouchIdle crouchIdle = new CrouchIdle(this, _blackboard);
+            CrouchWalking crouchWalk = new CrouchWalking(this, _blackboard);
 
             At(falling, idle, IsGrounded);
+
             At(idle, walking, IsMoving);
-            At(idle, crouching, IsCrouching);
+            At(idle, crouchIdle, () => IsCrouching() && !IsMoving());
+
             At(walking, running, IsRunning);
-            At(walking, crouching, IsCrouching);
-            At(crouching, running, () => !IsCrouchingBlocked() && IsRunning());
-            At(crouching, walking, () => !IsCrouching());
+            At(walking, crouchIdle, () => IsCrouching() && !IsMoving());
+            At(walking, crouchWalk, () => IsCrouching() && IsMoving());
+
+            At(crouchIdle, running, () => !IsCrouchingBlocked() && IsRunning());
+            At(crouchIdle, walking, () => !IsCrouching() && IsMoving());
+            At(crouchIdle, crouchWalk, () => IsCrouching() && IsMoving());
+
+            At(crouchWalk, crouchIdle, () => IsCrouching() && !IsMoving());
+            At(crouchWalk, running, () => !IsCrouchingBlocked() && IsRunning());
+            At(crouchWalk, walking, () => !IsCrouching() && IsMoving());
+
             At(running, walking, () => !IsRunning());
 
             AtAny(falling, () => !IsGrounded());

@@ -32,7 +32,7 @@ namespace DeepDreams.Player.StateMachine.Simple.States
 
             if (previousState == PlayerState.Walking || previousState == PlayerState.Running)
             {
-                _blackboard.OnStride.Invoke();
+                if (_blackboard.StrideDistance > _blackboard.PlayerStride * 0.4f) _blackboard.OnStride.Invoke();
 
                 if (previousState == PlayerState.Running)
                 {

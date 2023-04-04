@@ -80,7 +80,7 @@ namespace DeepDreams.Player
 
             // Check if grounded with edge tolerance.
             if (Physics.SphereCast(transform.position + Vector3.up * (groundedCheckRadius + 0.01f), groundedCheckRadius, Vector3.down,
-                    out RaycastHit _, floorDistanceFromFoot + (groundedCheckRadius + 0.01f)))
+                    out RaycastHit _, groundedCheckRadius + 0.03f))
             {
                 // From: https://forum.unity.com/threads/charactercontroller-and-walking-down-a-stairs.101859/
                 // Fixes isGrounded not working when going down stairs/slopes when setting y velocity to 0.

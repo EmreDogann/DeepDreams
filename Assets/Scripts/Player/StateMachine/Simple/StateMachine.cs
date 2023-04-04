@@ -33,10 +33,9 @@ namespace DeepDreams.Player.StateMachine.Simple
             if (state == _currentState)
                 return;
 
-
-            _currentState?.OnExit();
-            _prevState = _currentState == null ? state : _currentState;
+            _prevState = _currentState ?? state;
             _currentState = state;
+            _prevState?.OnExit();
 
             _transitions.TryGetValue(_currentState.GetType(), out _currentTransitions);
             if (_currentTransitions == null)
