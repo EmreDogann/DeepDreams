@@ -100,7 +100,7 @@ MonoBehaviour:
     xCurveAmplitude: 1.2
     yCurveAmplitude: 0
     zCurveAmplitude: 0
-    xCurveTimescale: 1
+    xCurveTimescale: 1.2
     yCurveTimescale: 0
     zCurveTimescale: 0
     invert: -1

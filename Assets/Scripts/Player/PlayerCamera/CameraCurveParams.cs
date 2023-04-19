@@ -2,7 +2,7 @@
 using MyBox;
 using UnityEngine;
 
-namespace DeepDreams.Player.Camera
+namespace DeepDreams.Player.PlayerCamera
 {
     [Serializable]
     public class CameraCurveParams

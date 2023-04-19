@@ -1,4 +1,5 @@
-﻿using DeepDreams.ScriptableObjects.Events.UnityEvents;
+﻿using System;
+using DeepDreams.ScriptableObjects.Events.UnityEvents;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -17,6 +18,7 @@ namespace DeepDreams.Player
         [SerializeField] private Transform cameraHolder;
         [SerializeField] private bool useEditorRotation;
 
+        private Vector2 _currentLookSensitivity;
         private Vector2 _lookDirection;
         private Vector2 _currentMouseDelta;
         private Vector2 _currentMouseDeltaVelocity;
@@ -24,21 +26,32 @@ namespace DeepDreams.Player
         private bool _isPaused;
         private BoolEventListener _onGamePausedEvent;
 
+        public static Action<float> LookSensitivityMultiply;
+
         private void Awake()
         {
             _onGamePausedEvent = GetComponent<BoolEventListener>();
 
             if (useEditorRotation) _lookDirection = new Vector2(transform.localEulerAngles.x, transform.localEulerAngles.y);
+
+            _currentLookSensitivity = lookSpeed;
         }
 
         private void OnEnable()
         {
             _onGamePausedEvent.Response.AddListener(OnGamePause);
+            LookSensitivityMultiply += ChangeSensitivity;
         }
 
         private void OnDisable()
         {
             _onGamePausedEvent.Response.RemoveListener(OnGamePause);
+            LookSensitivityMultiply -= ChangeSensitivity;
+        }
+
+        private void ChangeSensitivity(float multiplier)
+        {
+            _currentLookSensitivity = lookSpeed * multiplier;
         }
 
         private void Update()
@@ -46,6 +59,7 @@ namespace DeepDreams.Player
             if (_isPaused) return;
 
             CameraLook();
+            // _currentLookSensitivity = lookSpeed;
         }
 
         private void CameraLook()
@@ -61,8 +75,8 @@ namespace DeepDreams.Player
             Vector2 targetMouseDelta = value.Get<Vector2>();
             _currentMouseDelta = Vector2.SmoothDamp(_currentMouseDelta, targetMouseDelta, ref _currentMouseDeltaVelocity, mouseDamping);
 
-            _lookDirection.y += _currentMouseDelta.x * lookSpeed.x * 0.01f;
-            _lookDirection.x -= _currentMouseDelta.y * lookSpeed.y * 0.01f;
+            _lookDirection.y += _currentMouseDelta.x * _currentLookSensitivity.x * 0.01f;
+            _lookDirection.x -= _currentMouseDelta.y * _currentLookSensitivity.y * 0.01f;
             _lookDirection.x = Mathf.Clamp(_lookDirection.x, lookDownLimit, lookUpLimit);
         }
 

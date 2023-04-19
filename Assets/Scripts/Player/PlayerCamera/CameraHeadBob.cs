@@ -4,7 +4,7 @@ using DeepDreams.ThirdPartyAssets.GG_Camera_Shake.Runtime;
 using MyBox;
 using UnityEngine;
 
-namespace DeepDreams.Player.Camera
+namespace DeepDreams.Player.PlayerCamera
 {
     public class CameraHeadBob : MonoBehaviour, ICameraShake
     {
@@ -57,7 +57,7 @@ namespace DeepDreams.Player.Camera
         private Displacement _currentDisplacement;
         // ReSharper disable once ConvertToAutoProperty
         public Displacement CurrentDisplacement => _currentDisplacement;
-        public bool IsFinished { get; private set; }
+        public bool IsFinished { get; }
 
         private void Start()
         {

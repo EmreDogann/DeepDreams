@@ -2,7 +2,7 @@
 using MyBox;
 using UnityEngine;
 
-namespace DeepDreams.Player.Camera
+namespace DeepDreams.Player.PlayerCamera
 {
     [CreateAssetMenu(menuName = "Camera/Camera Curve Shake", fileName = "New Camera Curve Shake", order = 0)]
     public class CameraCurveShake : ScriptableObject, ICameraShake

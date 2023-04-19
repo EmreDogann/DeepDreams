@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace DeepDreams.Player.Camera
+namespace DeepDreams.Player.PlayerCamera
 {
     public class CameraRecoil : MonoBehaviour
     {
@@ -11,7 +11,7 @@ namespace DeepDreams.Player.Camera
         private float _returnSpeed;
 
         // Update is called once per frame
-        void FixedUpdate()
+        private void FixedUpdate()
         {
             _targetRotation = Vector3.Lerp(_targetRotation, Vector3.zero, _returnSpeed * Time.deltaTime);
             _currentRotation = Vector3.Slerp(_currentRotation, _targetRotation, _snappiness * Time.fixedDeltaTime);

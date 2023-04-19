@@ -1,5 +1,5 @@
 ﻿using System;
-using DeepDreams.Player.Camera;
+using DeepDreams.Player.PlayerCamera;
 using DeepDreams.Player.StateMachine.Simple;
 using MyBox;
 using UnityEngine;

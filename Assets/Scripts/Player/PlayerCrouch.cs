@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using DeepDreams.Audio;
-using DeepDreams.Player.Camera;
+using DeepDreams.Player.PlayerCamera;
 using DeepDreams.ScriptableObjects.Audio;
 using DeepDreams.ThirdPartyAssets.GG_Camera_Shake.Runtime;
 using MyBox;

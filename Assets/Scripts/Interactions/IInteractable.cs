@@ -3,12 +3,13 @@ namespace DeepDreams.Interactions
     public interface IInteractable
     {
         float HoldDuration { get; }
-        float HoldInteract { get; }
+        bool HoldInteract { get; }
         float MultipleUse { get; }
-        float IsInteractable { get; }
+        bool IsInteractable { get; }
 
         void OnStartHover();
         void OnInteract();
+        void OnEndInteract();
         void OnEndHover();
     }
 }

@@ -292,22 +292,22 @@
                 },
                 {
                     "name": "",
-                    "id": "ee287885-f21a-4b0d-b266-c3bc4d3bbd8e",
-                    "path": "<Keyboard>/e",
+                    "id": "40214022-4613-4fe8-a868-1046c3468299",
+                    "path": "<Gamepad>/buttonSouth",
                     "interactions": "",
                     "processors": "",
-                    "groups": "Keyboard&Mouse",
+                    "groups": "Gamepad",
                     "action": "Interact",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
-                    "id": "40214022-4613-4fe8-a868-1046c3468299",
-                    "path": "<Gamepad>/buttonSouth",
+                    "id": "e526d696-c630-4b36-99f6-1c9b4798293d",
+                    "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
-                    "groups": "Gamepad",
+                    "groups": "Keyboard&Mouse",
                     "action": "Interact",
                     "isComposite": false,
                     "isPartOfComposite": false
