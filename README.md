@@ -10,7 +10,7 @@
 </p>
 
 # Requirements
-- Unity 2021.3.16f1
+- Unity 2021.3.23f1
 
 # Third-Party Assets
 - [MyBox](https://github.com/Deadcows/MyBox) - Unity Attribute extensions
