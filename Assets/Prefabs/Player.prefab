@@ -811,8 +811,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33309ba609914250a4c6612dc9f8311b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  interactSensitivityMultiplier: 0.05
-  range: 5
+  interactionForce: 500
+  interactMouseSensitivityMultiplier: 0
+  interactMouseSensitivitySmoothingTime: 0.1
+  range: 2
   mask:
     serializedVersion: 2
     m_Bits: 256

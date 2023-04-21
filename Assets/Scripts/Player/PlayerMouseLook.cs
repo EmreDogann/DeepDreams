@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using DeepDreams.ScriptableObjects.Events.UnityEvents;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -23,10 +24,12 @@ namespace DeepDreams.Player
         private Vector2 _currentMouseDelta;
         private Vector2 _currentMouseDeltaVelocity;
 
+        private Coroutine _changeSensitivityCoroutine;
+
         private bool _isPaused;
         private BoolEventListener _onGamePausedEvent;
 
-        public static Action<float> LookSensitivityMultiply;
+        public static Action<float, float> LookSensitivityMultiply;
 
         private void Awake()
         {
@@ -49,9 +52,26 @@ namespace DeepDreams.Player
             LookSensitivityMultiply -= ChangeSensitivity;
         }
 
-        private void ChangeSensitivity(float multiplier)
+        private void ChangeSensitivity(float multiplier, float duration)
         {
-            _currentLookSensitivity = lookSpeed * multiplier;
+            if (_changeSensitivityCoroutine != null) StopCoroutine(_changeSensitivityCoroutine);
+            _changeSensitivityCoroutine = StartCoroutine(LerpSensitivity(_currentLookSensitivity, lookSpeed * multiplier, duration));
+        }
+
+        private IEnumerator LerpSensitivity(Vector2 start, Vector2 end, float duration)
+        {
+            float timeElapsed = 0.0f;
+
+            while (timeElapsed < duration)
+            {
+                float t = timeElapsed / duration;
+                _currentLookSensitivity = Vector2.Lerp(start, end, t);
+                timeElapsed += Time.deltaTime;
+
+                yield return null;
+            }
+
+            _currentLookSensitivity = end;
         }
 
         private void Update()

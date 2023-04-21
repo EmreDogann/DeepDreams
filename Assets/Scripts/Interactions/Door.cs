@@ -1,6 +1,5 @@
 ﻿using MyBox;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace DeepDreams.Interactions
 {
@@ -15,11 +14,16 @@ namespace DeepDreams.Interactions
         }
 
         [Separator("General")]
-        public float min;
-        public float max;
+        public float min = -90.0f;
+        public float max = 90.0f;
+        public float mass = 1.0f;
+        public float drag = 0.1f;
 
         private DoorState _doorState;
-        private Vector3 velocity;
+        [ReadOnly] [SerializeField] private Vector3 velocity;
+        private bool _isInteracting;
+        private Vector3 _endInteractionAngle;
+        private Vector3 _endInteractionVelocity;
 
         public Door(float holdDuration, bool holdInteract, float multipleUse, bool isInteractable) : base(holdDuration, holdInteract,
             multipleUse, isInteractable) {}
@@ -29,23 +33,33 @@ namespace DeepDreams.Interactions
             _doorState = DoorState.Closed;
         }
 
-        public override void OnInteract(InteractionSource interactionSource)
+        private void Update()
         {
-            // base.OnInteract();
+            Vector3 newRotation = Vector3.zero;
 
-            float dotProductRight = Vector3.Dot(transform.right, interactionSource.direction);
-            float dotProductForward = Vector3.Dot(-transform.forward, interactionSource.direction);
-
-            Vector3 newRotation = Vector3.SmoothDamp(transform.localEulerAngles, transform.localEulerAngles + new Vector3(0.0f,
-                    Mouse.current.delta.ReadValue().x * dotProductRight + Mouse.current.delta.ReadValue().y * dotProductForward, 0.0f),
-                ref velocity, 0.1f);
+            velocity *= Mathf.Clamp01(1.0f - drag * Time.deltaTime);
+            newRotation += velocity * Time.deltaTime;
+            newRotation += transform.localEulerAngles;
             newRotation.y = Clamp(newRotation.y, min, max);
             transform.localRotation = Quaternion.Euler(newRotation);
         }
 
+        public override void OnInteract(InteractionData interactionData)
+        {
+            _isInteracting = true;
+            // base.OnInteract();
+
+            float dotProductRight = Vector3.Dot(transform.right, interactionData.SourceDirection);
+            float dotProductForward = Vector3.Dot(-transform.forward, interactionData.SourceDirection);
+
+            velocity += new Vector3(0.0f,
+                interactionData.InteractionForce.x / mass * dotProductRight + interactionData.InteractionForce.y / mass * dotProductForward,
+                0.0f);
+        }
+
         public override void OnEndInteract()
         {
-            velocity = Vector3.zero;
+            _isInteracting = false;
         }
 
         // From: http://answers.unity.com/comments/1406762/view.html

@@ -3,15 +3,19 @@ using UnityEngine;
 
 namespace DeepDreams.Interactions
 {
-    public class InteractionSource
+    public class InteractionData
     {
-        public Vector3 position;
-        public Vector3 direction;
+        public Vector3 SourcePosition;
+        public Vector3 SourceDirection;
+        public Vector3 InteractionPoint;
+        public Vector3 InteractionForce;
 
-        public InteractionSource(Vector3 position, Vector3 direction)
+        public InteractionData(Vector3 position, Vector3 direction, Vector3 interactionPoint, Vector3 interactionForce)
         {
-            this.position = position;
-            this.direction = direction;
+            SourcePosition = position;
+            SourceDirection = direction;
+            InteractionPoint = interactionPoint;
+            InteractionForce = interactionForce;
         }
     }
 
@@ -39,7 +43,12 @@ namespace DeepDreams.Interactions
 
         public virtual void OnStartHover()
         {
-            Debug.Log("Start Hovered: " + gameObject.name);
+            // Debug.Log("Start Hovered: " + gameObject.name);
+        }
+
+        public virtual void OnStartInteract()
+        {
+            // Debug.Log("End Interacted: " + gameObject.name);
         }
 
         public virtual void OnInteract()
@@ -47,19 +56,19 @@ namespace DeepDreams.Interactions
             Debug.Log("Interacted: " + gameObject.name);
         }
 
-        public virtual void OnInteract(InteractionSource interactionSource = null)
+        public virtual void OnInteract(InteractionData interactionData)
         {
             Debug.Log("Interacted: " + gameObject.name);
         }
 
         public virtual void OnEndInteract()
         {
-            Debug.Log("End Interacted: " + gameObject.name);
+            // Debug.Log("End Interacted: " + gameObject.name);
         }
 
         public virtual void OnEndHover()
         {
-            Debug.Log("End Hovered: " + gameObject.name);
+            // Debug.Log("End Hovered: " + gameObject.name);
         }
 
         public bool IsHoldInteractFinished()
