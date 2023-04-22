@@ -7,17 +7,34 @@ namespace DeepDreams.Interactions
     public class Drawer : InteractableBase
     {
         [Separator("General")]
-        public float min = -90.0f;
-        public float max = 90.0f;
+        public float min;
+        public float max = 1.0f;
         public float mass = 1.0f;
         public float drag = 0.1f;
-        [OrthogonalUnitVector3] public Vector3 axis = Vector3.forward;
+        [Tooltip("This is the axis (in local space) the object will move in/rotate around.")]
+        [OrthogonalUnitVector3] public Vector3 movementAxis = Vector3.forward;
+        [Tooltip(
+            "If your model is not oriented correctly (e.g. object is not facing the Z direction as its forward) then override them here.")]
+        [OverrideLabel("Override Model Forward")] public bool forwardAxisOverride;
+        [Tooltip("Direction the object is facing in local space.")]
+        [ConditionalField(nameof(forwardAxisOverride))] [OrthogonalUnitVector3] public Vector3 forwardAxis = Vector3.forward;
+
+        [Tooltip(
+            "If your model is not oriented correctly (e.g. object's side is not facing the X direction as its right) then override them here.")]
+        [OverrideLabel("Override Model Right")] public bool rightAxisOverride;
+        [Tooltip("Direction the object's side is facing in local space.")]
+        [ConditionalField(nameof(rightAxisOverride))] [OrthogonalUnitVector3] public Vector3 rightAxis = Vector3.right;
 
         [ReadOnly] [SerializeField] private Vector3 velocity;
         private bool _isInteracting;
 
         public Drawer(float holdDuration, bool holdInteract, float multipleUse, bool isInteractable) : base(holdDuration, holdInteract,
             multipleUse, isInteractable) {}
+
+        private void Start()
+        {
+            FindLocalForward();
+        }
 
         private void Update()
         {
@@ -30,6 +47,11 @@ namespace DeepDreams.Interactions
             transform.localPosition = newPosition;
 
             if (ReachedLimit()) {}
+
+            // Debug.DrawRay(transform.position, transform.forward, Color.blue);
+            // Debug.DrawRay(transform.position, transform.right, Color.red);
+            // Debug.DrawRay(transform.position, transform.up, Color.green);
+            // Debug.DrawRay(transform.position, transform.rotation * movementAxis, Color.yellow);
         }
 
         public override void OnInteract(InteractionData interactionData)
@@ -37,14 +59,22 @@ namespace DeepDreams.Interactions
             _isInteracting = true;
             // base.OnInteract();
 
-            // Debug.DrawRay(transform.position, Vector3.forward, Color.blue);
-            // Debug.DrawRay(transform.position, Vector3.right, Color.red);
+            // transform.forward is the object's forward direction represented in world space (same applies to .right and .up).
+            // In local space, the object's forward is always (0,0,1), right always (1,0,0), and up always (0,1,0).
+            // i.e. It is = transform.rotation * Vector3.forward
+            // Get forward and right directions in world space.
+            Vector3 forwardDirection = transform.rotation * (forwardAxisOverride ? forwardAxis : movementAxis);
+            Vector3 rightDirection = rightAxisOverride ? transform.rotation * rightAxis : transform.right;
 
-            float dotProductRight = Vector3.Dot(Vector3.right, interactionData.SourceDirection);
-            float dotProductForward = Vector3.Dot(Vector3.forward, interactionData.SourceDirection);
+            // Dot products used as multipliers. For example, if the player is facing to the side of a drawer, y-axis mouse movement
+            // should contribute 0% to the interaction, but x-axis mouse movement should contribute 100% to the interaction.
+            float dotProductRight = Vector3.Dot(rightDirection, interactionData.SourceDirection);
+            float dotProductForward = Vector3.Dot(forwardDirection, interactionData.SourceDirection);
 
-            velocity += axis * (interactionData.InteractionForce.x / mass * dotProductForward +
-                                interactionData.InteractionForce.y / mass * dotProductRight);
+            // localPosition moves the object in parent space.
+            // Therefore, multiplying by localRotation will give us a vector in parent space.
+            velocity += transform.localRotation * movementAxis * (interactionData.InteractionForce.x / mass * dotProductRight +
+                                                                  interactionData.InteractionForce.y / mass * dotProductForward);
         }
 
         public override void OnEndInteract()
@@ -52,9 +82,16 @@ namespace DeepDreams.Interactions
             _isInteracting = false;
         }
 
+        private void FindLocalForward()
+        {
+            forwardAxis = movementAxis;
+            // rightAxis = 
+            // if (Vector3.Dot(movementAxis, transform.forward))
+        }
+
         private bool ReachedLimit()
         {
-            float component = Vector3.Dot(Vector3.Scale(transform.localPosition, axis.normalized), axis.normalized);
+            float component = Vector3.Dot(Vector3.Scale(transform.localPosition, movementAxis.normalized), movementAxis.normalized);
             if (component == min || component == max) return true;
 
             return false;
