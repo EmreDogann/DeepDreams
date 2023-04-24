@@ -14,7 +14,7 @@
 
 # Third-Party Assets
 - [MyBox](https://github.com/Deadcows/MyBox) - Unity Attribute extensions
-- [TypeReference For Unity](https://github.com/SolidAlloy/ClassTypeReference-for-Unity) - Used for C# reflection.
+- [TypeReference For Unity](https://github.com/SolidAlloy/ClassTypeReference-for-Unity) - Used for aiding integration of C# reflection with Unity editor.
 
 ## Optional - Used for (tool) development purposes
 - [Hierarchy Dectorator](https://github.com/WooshiiDev/HierarchyDecorator) - Cosmetic changes to hierarchy tab
