@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using DeepDreams.ThirdPartyAssets.Llamacademy.Spring;
 using MyBox;
 using UnityEngine;
 
@@ -13,6 +15,8 @@ namespace DeepDreams.Interactions
         public float angularDrag = 0.1f;
         public float stoppingDrag = 0.1f;
         public float pushStrength = 100.0f;
+        [Range(0.0f, 1.0f)] public float damping = 0.5f;
+        [Range(0.0f, 15.0f)] public float sitffness = 1.0f;
 
         [Separator("Automatic Closing")]
         [Tooltip("The angle at which or below the door will automatically close.")]
@@ -25,9 +29,24 @@ namespace DeepDreams.Interactions
         private Vector3 _endInteractionAngle;
         private Vector3 _endInteractionVelocity;
         private Vector3? _prevSourcePosition;
+        private bool _reachedLimitPrevFrame;
+
+        private SpringVector3 _spring;
+        private bool _isNudgeInProgress;
 
         public Door(float holdDuration, bool holdInteract, float multipleUse, bool isInteractable) : base(holdDuration, holdInteract,
             multipleUse, isInteractable) {}
+
+        private void Awake()
+        {
+            _spring = new SpringVector3
+            {
+                StartValue = transform.localRotation.eulerAngles,
+                EndValue = transform.localRotation.eulerAngles,
+                Damping = damping,
+                Stiffness = sitffness
+            };
+        }
 
         private void Update()
         {
@@ -49,6 +68,13 @@ namespace DeepDreams.Interactions
                 targetAngle.y = 0.0f;
                 transform.localRotation = Quaternion.RotateTowards(transform.localRotation, Quaternion.Euler(targetAngle), step);
             }
+
+            // Make the door bounce a little when it hits the mix/max limit.
+            if (ReachedLimitThisFrame() && !_isNudgeInProgress && velocity.sqrMagnitude > 1000.0f)
+            {
+                velocity.y = Mathf.Clamp(velocity.y, -30.0f, 30.0f);
+                Nudge(new Vector3(0.0f, velocity.y, 0.0f));
+            }
         }
 
         public override void OnStartInteract(InteractionData interactionData)
@@ -62,23 +88,29 @@ namespace DeepDreams.Interactions
             _isInteracting = true;
             // base.OnInteract();
 
-            // Dot products used as multipliers. For example, if the player is facing to the side of a drawer, y-axis mouse movement
-            // should contribute 0% to the interaction, but x-axis mouse movement should contribute 100% to the interaction.
-            float dotProductRight = Vector3.Dot(transform.right, interactionData.Source.forward);
-            float dotProductForward = Vector3.Dot(-transform.forward, interactionData.Source.forward);
 
-            // Apply source's positional movement velocity to the interactable object.
-            if (_prevSourcePosition != null)
+            // Don't move the door when nudging is in progress, otherwise they will conflict.
+            if (!_isNudgeInProgress)
             {
-                Vector3 distanceMoved = (Vector3)(interactionData.Source.position - _prevSourcePosition);
-                velocity.y += pushStrength *
-                              (Vector3.Dot(distanceMoved, interactionData.Source.forward) * dotProductForward / mass +
-                               Vector3.Dot(distanceMoved, interactionData.Source.right) * dotProductRight / mass);
-            }
+                // Dot products used as multipliers. For example, if the player is facing to the side of a drawer, y-axis mouse movement
+                // should contribute 0% to the interaction, but x-axis mouse movement should contribute 100% to the interaction.
+                float dotProductRight = Vector3.Dot(transform.right, interactionData.Source.forward);
+                float dotProductForward = Vector3.Dot(-transform.forward, interactionData.Source.forward);
 
-            velocity += new Vector3(0.0f,
-                interactionData.InteractionForce.x / mass * dotProductRight + interactionData.InteractionForce.y / mass * dotProductForward,
-                0.0f);
+                // Apply source's positional movement velocity to the interactable object.
+                if (_prevSourcePosition != null)
+                {
+                    Vector3 distanceMoved = (Vector3)(interactionData.Source.position - _prevSourcePosition);
+                    velocity.y += pushStrength *
+                                  (Vector3.Dot(distanceMoved, interactionData.Source.forward) * dotProductForward / mass +
+                                   Vector3.Dot(distanceMoved, interactionData.Source.right) * dotProductRight / mass);
+                }
+
+                velocity += new Vector3(0.0f,
+                    interactionData.InteractionForce.x / mass * dotProductRight +
+                    interactionData.InteractionForce.y / mass * dotProductForward,
+                    0.0f);
+            }
 
             _prevSourcePosition = interactionData.Source.position;
         }
@@ -86,6 +118,38 @@ namespace DeepDreams.Interactions
         public override void OnEndInteract(InteractionData interactionData)
         {
             _isInteracting = false;
+        }
+
+        public void Nudge(Vector3 Amount)
+        {
+            if (Mathf.Approximately(_spring.CurrentVelocity.sqrMagnitude, 0)) StartCoroutine(HandleNudge(Amount));
+            else _spring.UpdateEndValue(_spring.EndValue, _spring.CurrentVelocity + Amount);
+        }
+
+        private IEnumerator HandleNudge(Vector3 Amount)
+        {
+            _isNudgeInProgress = true;
+
+            _spring.Damping = damping;
+            _spring.Stiffness = sitffness;
+
+            _spring.Reset();
+            _spring.StartValue = transform.localRotation.eulerAngles;
+            _spring.EndValue = transform.localRotation.eulerAngles;
+            _spring.InitialVelocity = Amount;
+            Quaternion targetRotation = transform.localRotation;
+            transform.localRotation = Quaternion.Euler(_spring.Evaluate(Time.deltaTime));
+
+            while (!Mathf.Approximately(0, 1 - Quaternion.Dot(targetRotation, transform.localRotation)))
+            {
+                transform.localRotation = Quaternion.Euler(_spring.Evaluate(Time.deltaTime));
+
+                yield return null;
+            }
+
+            _spring.Reset();
+
+            _isNudgeInProgress = false;
         }
 
         // From: http://answers.unity.com/comments/1406762/view.html
@@ -107,6 +171,31 @@ namespace DeepDreams.Interactions
             if (angle > max) angle -= 360.0f;
 
             return angle;
+        }
+
+        private bool ReachedLimit()
+        {
+            Vector3 vector = transform.localEulerAngles;
+            vector.y = AngleRemap(vector.y, 180.0f);
+
+            float component = Vector3.Dot(vector, transform.up);
+            if (component == min || component == max) return true;
+
+            return false;
+        }
+
+        private bool ReachedLimitThisFrame()
+        {
+            bool result = ReachedLimit();
+
+            if (result && !_reachedLimitPrevFrame)
+            {
+                _reachedLimitPrevFrame = true;
+                return true;
+            }
+
+            _reachedLimitPrevFrame = result;
+            return false;
         }
     }
 }

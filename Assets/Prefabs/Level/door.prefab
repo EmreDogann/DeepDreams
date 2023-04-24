@@ -120,8 +120,10 @@ MonoBehaviour:
   angularDrag: 8
   stoppingDrag: 4
   pushStrength: 500
+  damping: 0.56
+  sitffness: 12.85
   closeThresholdAngle: 13
-  closeSpeed: 150
+  closeSpeed: 75
   velocity: {x: 0, y: 0, z: 0}
 --- !u!1 &2150556828647869220
 GameObject:
