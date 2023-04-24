@@ -11,6 +11,8 @@ namespace DeepDreams.Interactions
         public float max = 1.0f;
         public float mass = 1.0f;
         public float drag = 0.1f;
+        public float pushStrength = 100.0f;
+
         [Tooltip("This is the axis (in local space) the object will move in/rotate around.")]
         [OrthogonalUnitVector3] public Vector3 movementAxis = Vector3.forward;
         [Tooltip(
@@ -27,14 +29,10 @@ namespace DeepDreams.Interactions
 
         [ReadOnly] [SerializeField] private Vector3 velocity;
         private bool _isInteracting;
+        private Vector3? _prevSourcePosition;
 
         public Drawer(float holdDuration, bool holdInteract, float multipleUse, bool isInteractable) : base(holdDuration, holdInteract,
             multipleUse, isInteractable) {}
-
-        private void Start()
-        {
-            FindLocalForward();
-        }
 
         private void Update()
         {
@@ -54,6 +52,12 @@ namespace DeepDreams.Interactions
             // Debug.DrawRay(transform.position, transform.rotation * movementAxis, Color.yellow);
         }
 
+        public override void OnStartInteract(InteractionData interactionData)
+        {
+            // base.OnStartInteract(interactionData);
+            _prevSourcePosition = null;
+        }
+
         public override void OnInteract(InteractionData interactionData)
         {
             _isInteracting = true;
@@ -68,25 +72,29 @@ namespace DeepDreams.Interactions
 
             // Dot products used as multipliers. For example, if the player is facing to the side of a drawer, y-axis mouse movement
             // should contribute 0% to the interaction, but x-axis mouse movement should contribute 100% to the interaction.
-            float dotProductRight = Vector3.Dot(rightDirection, interactionData.SourceDirection);
-            float dotProductForward = Vector3.Dot(forwardDirection, interactionData.SourceDirection);
+            float dotProductRight = Vector3.Dot(rightDirection, interactionData.Source.forward);
+            float dotProductForward = Vector3.Dot(forwardDirection, interactionData.Source.forward);
+
+            // Apply source's positional movement velocity to the interactable object.
+            if (_prevSourcePosition != null)
+            {
+                Vector3 distanceMoved = (Vector3)(interactionData.Source.position - _prevSourcePosition);
+                velocity += transform.localRotation * movementAxis *
+                            (pushStrength * (Vector3.Dot(distanceMoved, interactionData.Source.forward) * dotProductForward / mass +
+                                             Vector3.Dot(distanceMoved, interactionData.Source.right) * dotProductRight / mass));
+            }
 
             // localPosition moves the object in parent space.
             // Therefore, multiplying by localRotation will give us a vector in parent space.
             velocity += transform.localRotation * movementAxis * (interactionData.InteractionForce.x / mass * dotProductRight +
                                                                   interactionData.InteractionForce.y / mass * dotProductForward);
+
+            _prevSourcePosition = interactionData.Source.position;
         }
 
-        public override void OnEndInteract()
+        public override void OnEndInteract(InteractionData interactionData)
         {
             _isInteracting = false;
-        }
-
-        private void FindLocalForward()
-        {
-            forwardAxis = movementAxis;
-            // rightAxis = 
-            // if (Vector3.Dot(movementAxis, transform.forward))
         }
 
         private bool ReachedLimit()

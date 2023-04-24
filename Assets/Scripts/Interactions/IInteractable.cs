@@ -8,8 +8,10 @@ namespace DeepDreams.Interactions
         bool IsInteractable { get; }
 
         void OnStartHover();
-        void OnInteract();
-        void OnEndInteract();
+
+        void OnStartInteract(InteractionData interactionData);
+        void OnInteract(InteractionData interactionData);
+        void OnEndInteract(InteractionData interactionData);
         void OnEndHover();
     }
 }

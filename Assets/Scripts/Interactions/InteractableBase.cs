@@ -5,17 +5,22 @@ namespace DeepDreams.Interactions
 {
     public class InteractionData
     {
-        public Vector3 SourcePosition;
-        public Vector3 SourceDirection;
+        public Transform Source;
         public Vector3 InteractionPoint;
         public Vector3 InteractionForce;
 
-        public InteractionData(Vector3 position, Vector3 direction, Vector3 interactionPoint, Vector3 interactionForce)
+        public InteractionData(Transform sourceTransform, Vector3 interactionPoint, Vector3 interactionForce)
         {
-            SourcePosition = position;
-            SourceDirection = direction;
+            Source = sourceTransform;
             InteractionPoint = interactionPoint;
             InteractionForce = interactionForce;
+        }
+
+        public InteractionData()
+        {
+            Source = null;
+            InteractionPoint = Vector3.zero;
+            InteractionForce = Vector3.zero;
         }
     }
 
@@ -46,12 +51,7 @@ namespace DeepDreams.Interactions
             // Debug.Log("Start Hovered: " + gameObject.name);
         }
 
-        public virtual void OnStartInteract()
-        {
-            // Debug.Log("End Interacted: " + gameObject.name);
-        }
-
-        public virtual void OnInteract()
+        public virtual void OnStartInteract(InteractionData interactionData)
         {
             Debug.Log("Interacted: " + gameObject.name);
         }
@@ -61,7 +61,7 @@ namespace DeepDreams.Interactions
             Debug.Log("Interacted: " + gameObject.name);
         }
 
-        public virtual void OnEndInteract()
+        public virtual void OnEndInteract(InteractionData interactionData)
         {
             // Debug.Log("End Interacted: " + gameObject.name);
         }

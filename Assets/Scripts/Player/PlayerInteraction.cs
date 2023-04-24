@@ -23,9 +23,12 @@ namespace DeepDreams.Player
         private PlayerInput _playerInput;
         private InputAction _interactAction;
         private bool _isInteractPressed;
+        private bool _isInteracting;
 
         private bool _isPaused;
         private BoolEventListener _onGamePausedEvent;
+
+        private Vector3 _startingInteractionPosition;
 
         private void Awake()
         {
@@ -51,42 +54,69 @@ namespace DeepDreams.Player
 
         private void Update()
         {
-            if (_interactAction.WasReleasedThisFrame())
-            {
-                _currentTarget?.OnEndInteract();
-                PlayerMouseLook.LookSensitivityMultiply.Invoke(1.0f, interactMouseSensitivitySmoothingTime);
-            }
+            if (_isInteracting && _interactAction.WasReleasedThisFrame()) StopInteraction();
 
             if (!_isInteractPressed) RaycastForInteractable();
+            else
+            {
+                if (_isInteracting)
+                {
+                    // Check if out of interaction range.
+                    // if (Vector3.Distance(transform.position, _startingInteractionPosition) > range) StopInteraction();
+                }
+            }
 
             // Some house-keeping.
             if (_currentTarget != null)
             {
-                if (_interactAction.WasPressedThisFrame())
+                if (!_currentTarget.IsInteractable)
                 {
-                    _currentTarget?.OnStartInteract();
-                    PlayerMouseLook.LookSensitivityMultiply.Invoke(interactMouseSensitivityMultiplier,
-                        interactMouseSensitivitySmoothingTime);
+                    if (_isInteracting) StopInteraction();
+                    return;
                 }
 
-                if (_isInteractPressed)
+                if (_interactAction.WasPressedThisFrame())
                 {
-                    if (!_currentTarget.IsInteractable) return;
+                    _isInteracting = true;
 
-                    if (!_currentTarget.HoldInteract || _isPaused) _isInteractPressed = false;
+                    Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+                    mouseDelta = _mainCamera.ScreenToViewportPoint(mouseDelta) * interactionForce;
+
+                    _currentTarget?.OnStartInteract(new InteractionData(transform, _hit.point,
+                        new Vector3(mouseDelta.x, mouseDelta.y, 0.0f)));
+
+                    PlayerMouseLook.LookSensitivityMultiply.Invoke(interactMouseSensitivityMultiplier,
+                        interactMouseSensitivitySmoothingTime);
+
+                    _startingInteractionPosition = transform.position;
+                }
+
+                if (_isInteracting)
+                {
+                    if (!_currentTarget.HoldInteract || _isPaused) StopInteraction();
                     else
                     {
                         if (_currentTarget.IsHoldInteractFinished())
-                            PlayerMouseLook.LookSensitivityMultiply.Invoke(1.0f, interactMouseSensitivitySmoothingTime);
+                            StopInteraction();
                     }
 
                     Vector2 mouseDelta = Mouse.current.delta.ReadValue();
                     mouseDelta = _mainCamera.ScreenToViewportPoint(mouseDelta) * interactionForce;
 
-                    _currentTarget.OnInteract(new InteractionData(transform.position, transform.forward, _hit.point,
-                        new Vector3(mouseDelta.x, mouseDelta.y, 0.0f)));
+                    _currentTarget.OnInteract(new InteractionData(transform, _hit.point, new Vector3(mouseDelta.x, mouseDelta.y, 0.0f)));
                 }
             }
+        }
+
+        private void StopInteraction()
+        {
+            _isInteracting = false;
+            PlayerMouseLook.LookSensitivityMultiply.Invoke(1.0f, interactMouseSensitivitySmoothingTime);
+
+            Vector2 mouseDelta = Mouse.current.delta.ReadValue();
+            mouseDelta = _mainCamera.ScreenToViewportPoint(mouseDelta) * interactionForce;
+
+            _currentTarget?.OnEndInteract(new InteractionData(transform, _hit.point, new Vector3(mouseDelta.x, mouseDelta.y, 0.0f)));
         }
 
         private void RaycastForInteractable()
