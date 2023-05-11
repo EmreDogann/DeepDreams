@@ -717,8 +717,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5171a0c0796971408eae3678a90cb03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveDamping: 0.1
-  walkSpeed: 2.2
+  moveDamping: 0.13
+  walkSpeed: 1.8
   walkBackSpeedMultiplier: 0.7
   walkStride: 1.1
   gravity: -20

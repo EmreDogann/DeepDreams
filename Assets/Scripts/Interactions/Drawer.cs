@@ -24,7 +24,8 @@ namespace DeepDreams.Interactions
             "If your model is not oriented correctly (e.g. object is not facing the Z direction as its forward) then override them here.")]
         [OverrideLabel("Override Model Forward")] public bool forwardAxisOverride;
         [Tooltip("Direction the object is facing in local space.")]
-        [ConditionalField(nameof(forwardAxisOverride))] [OrthogonalUnitVector3] public Vector3 forwardAxis = Vector3.forward;
+        [ConditionalField(nameof(forwardAxisOverride))]
+        [OrthogonalUnitVector3] public Vector3 forwardAxis = Vector3.forward;
 
         [Tooltip(
             "If your model is not oriented correctly (e.g. object's side is not facing the X direction as its right) then override them here.")]
@@ -40,7 +41,8 @@ namespace DeepDreams.Interactions
         private SpringVector3 _spring;
         private bool _isNudgeInProgress;
 
-        public Drawer(float holdDuration, bool holdInteract, float multipleUse, bool isInteractable) : base(holdDuration, holdInteract,
+        public Drawer(float holdDuration, bool holdInteract, float multipleUse, bool isInteractable) : base(
+            holdDuration, holdInteract,
             multipleUse, isInteractable) {}
 
         private void Awake()
@@ -108,14 +110,17 @@ namespace DeepDreams.Interactions
                 {
                     Vector3 distanceMoved = (Vector3)(interactionData.Source.position - _prevSourcePosition);
                     velocity += transform.localRotation * movementAxis *
-                                (pushStrength * (Vector3.Dot(distanceMoved, interactionData.Source.forward) * dotProductForward / mass +
-                                                 Vector3.Dot(distanceMoved, interactionData.Source.right) * dotProductRight / mass));
+                                (pushStrength * (Vector3.Dot(distanceMoved, interactionData.Source.forward) *
+                                                 dotProductForward / mass +
+                                                 Vector3.Dot(distanceMoved, interactionData.Source.right) *
+                                                 dotProductRight / mass));
                 }
 
                 // localPosition moves the object in parent space.
                 // Therefore, multiplying by localRotation will give us a vector in parent space.
-                velocity += transform.localRotation * movementAxis * (interactionData.InteractionForce.x / mass * dotProductRight +
-                                                                      interactionData.InteractionForce.y / mass * dotProductForward);
+                velocity += transform.localRotation * movementAxis *
+                            (interactionData.InteractionForce.x / mass * dotProductRight +
+                             interactionData.InteractionForce.y / mass * dotProductForward);
             }
 
             _prevSourcePosition = interactionData.Source.position;
@@ -128,9 +133,14 @@ namespace DeepDreams.Interactions
 
         public void Nudge(Vector3 Amount)
         {
-            Debug.Log("Nudge!");
-            if (Mathf.Approximately(_spring.CurrentVelocity.sqrMagnitude, 0)) StartCoroutine(HandleNudge(Amount));
-            else _spring.UpdateEndValue(_spring.EndValue, _spring.CurrentVelocity + Amount);
+            if (Mathf.Approximately(_spring.CurrentVelocity.sqrMagnitude, 0))
+            {
+                StartCoroutine(HandleNudge(Amount));
+            }
+            else
+            {
+                _spring.UpdateEndValue(_spring.EndValue, _spring.CurrentVelocity + Amount);
+            }
         }
 
         private IEnumerator HandleNudge(Vector3 Amount)
@@ -163,7 +173,11 @@ namespace DeepDreams.Interactions
         {
             Vector3 axis = transform.localRotation * movementAxis.normalized;
             float component = Vector3.Dot(Vector3.Scale(transform.localPosition, axis), axis);
-            if (Mathf.Approximately(component, min) || Mathf.Approximately(component, max)) return true;
+
+            if (Mathf.Approximately(component, min) || Mathf.Approximately(component, max))
+            {
+                return true;
+            }
 
             return false;
         }

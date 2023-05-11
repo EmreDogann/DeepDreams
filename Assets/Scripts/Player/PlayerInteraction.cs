@@ -134,7 +134,7 @@ namespace DeepDreams.Player
             // else Debug.DrawRay(_cameraRay.origin, _cameraRay.direction * range, Color.red);
 
             if (newTarget == _currentTarget) return;
-
+            
             _currentTarget?.OnEndHover();
             newTarget?.OnStartHover();
 
