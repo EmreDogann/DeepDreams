@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DeepDreams.ScriptableObjects.Events.UnityEvents
 {
-    [CreateAssetMenu(fileName = "New Recoil Event", menuName = "Game Event/Unity Event/Recoil Event", order = 3)]
+    [CreateAssetMenu(fileName = "New Recoil Event", menuName = "Game Event/Unity Event/Recoil Event", order = 4)]
     public class RecoilEventChannelSO : ScriptableObject
     {
         private readonly List<RecoilEventListener> listeners = new List<RecoilEventListener>();

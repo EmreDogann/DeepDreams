@@ -30,7 +30,8 @@ ModelImporter:
     animationScaleError: 0.5
     animationWrapMode: 0
     extraExposedTransformPaths: []
-    extraUserProperties: []
+    extraUserProperties:
+    - '#BAKERY{"meshName":["SM_ CoatRack_01_A"],"padding":[65],"unwrapper":[1]}'
     clipAnimations: []
     isReadable: 0
   meshes:

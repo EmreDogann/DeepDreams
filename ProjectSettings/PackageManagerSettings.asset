@@ -33,6 +33,9 @@ MonoBehaviour:
     - com.openupm
     - com.solidalloy
     - org.nuget
+    - jillejr.newtonsoft.json-for-unity.converters
+    - https://github.com/EmreDogann/unity-main-scene-auto-loading.git#upm
+    - com.needle.compilation-visualizer
     m_IsDefault: 0
     m_Capabilities: 0
     m_ConfigSource: 4

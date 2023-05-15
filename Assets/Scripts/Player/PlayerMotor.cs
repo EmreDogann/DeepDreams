@@ -1,10 +1,12 @@
-﻿using MyBox;
+﻿using DeepDreams.SaveLoad;
+using DeepDreams.SaveLoad.Data;
+using MyBox;
 using UnityEngine;
 
 namespace DeepDreams.Player
 {
     [RequireComponent(typeof(PlayerBlackboard))]
-    public class PlayerMotor : MonoBehaviour
+    public class PlayerMotor : MonoBehaviour, ISaveable<GameData>
     {
         // ---- Inspector Fields ----
         [Separator("Movement")]
@@ -60,14 +62,20 @@ namespace DeepDreams.Player
             _wasGrounded = _blackboard.IsGrounded;
             _blackboard.IsGrounded = CheckGrounded();
 
-            if (!_blackboard.IsGrounded && _wasGrounded) _velocityY = 0.0f;
+            if (!_blackboard.IsGrounded && _wasGrounded)
+            {
+                _velocityY = 0.0f;
+            }
 
             Vector2 targetMoveVector = _blackboard.targetMoveDir *
-                                       (_blackboard.MoveSpeed * (_blackboard.IsMovingBackward ? walkBackSpeedMultiplier : 1.0f));
-            _currentMoveDir = Vector2.SmoothDamp(_currentMoveDir, targetMoveVector, ref _currentMoveDirVelocity, moveDamping);
+                                       (_blackboard.MoveSpeed *
+                                        (_blackboard.IsMovingBackward ? walkBackSpeedMultiplier : 1.0f));
+            _currentMoveDir = Vector2.SmoothDamp(_currentMoveDir, targetMoveVector, ref _currentMoveDirVelocity,
+                moveDamping);
 
             _velocityY += gravity * Time.deltaTime; // acceleration = meters per second **squared**.
-            _velocity = transform.forward * _currentMoveDir.y + transform.right * _currentMoveDir.x + Vector3.up * _velocityY;
+            _velocity = transform.forward * _currentMoveDir.y + transform.right * _currentMoveDir.x +
+                        Vector3.up * _velocityY;
             _velocity += _edgeSlideMovement;
 
             _playerController.Move(_velocity * Time.deltaTime);
@@ -79,7 +87,8 @@ namespace DeepDreams.Player
             _edgeSlideMovement = Vector2.zero;
 
             // Check if grounded with edge tolerance.
-            if (Physics.SphereCast(transform.position + Vector3.up * (groundedCheckRadius + 0.01f), groundedCheckRadius, Vector3.down,
+            if (Physics.SphereCast(transform.position + Vector3.up * (groundedCheckRadius + 0.01f), groundedCheckRadius,
+                    Vector3.down,
                     out RaycastHit _, groundedCheckRadius + 0.03f))
             {
                 // From: https://forum.unity.com/threads/charactercontroller-and-walking-down-a-stairs.101859/
@@ -104,6 +113,16 @@ namespace DeepDreams.Player
         private void OnControllerColliderHit(ControllerColliderHit hit)
         {
             _edgeHitPoint = hit.point;
+        }
+
+        public void SaveData(GameData saveData)
+        {
+            saveData.playerPosition = transform.position;
+        }
+
+        public void LoadData(GameData saveData)
+        {
+            transform.position = saveData.playerPosition;
         }
     }
 }

@@ -737,8 +737,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lookSpeed: {x: 6, y: 6}
-  lookDownLimit: -70
-  lookUpLimit: 70
+  lookDownLimit: 70
+  lookUpLimit: -70
   mouseDamping: 0.02
   cameraHolder: {fileID: 5440670880542269040}
   useEditorRotation: 1

@@ -1,8 +1,0 @@
-# This file is used for storing the scene's baked lightmap data.
-# This data is too large to commit to git, so it is being ignored and this .gitignore is used as a placeholder.
-# .gitignore to keep just .txt files
-# Filter everything...
-*
-
-# ... except the .gitignore...
-!.gitignore

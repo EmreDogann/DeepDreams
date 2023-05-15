@@ -2,6 +2,7 @@
 using System.Collections;
 using DeepDreams.Audio;
 using DeepDreams.ScriptableObjects.Audio;
+using DeepDreams.Services;
 using DeepDreams.UI.Effects;
 using MyBox;
 using TMPro;
@@ -61,16 +62,26 @@ namespace DeepDreams.UI.Components.Buttons
         public static event Action OnButtonHover;
         public static event Action OnButtonClick;
 
+        private IAudioManager _audioManager;
+
         private void Awake()
         {
-            if (targetGraphic == null) targetGraphic = GetComponentInChildren<TextMeshProUGUI>();
+            _audioManager = ServiceLocator.Instance.GetService<IAudioManager>();
+
+            if (targetGraphic == null)
+            {
+                targetGraphic = GetComponentInChildren<TextMeshProUGUI>();
+            }
 
             if (!isEnabled)
             {
                 targetGraphic.color = colorBlock.disabledColor;
                 _buttonStatus = ButtonStatus.Disabled;
             }
-            else targetGraphic.color = colorBlock.normalColor;
+            else
+            {
+                targetGraphic.color = colorBlock.normalColor;
+            }
 
             _buttonEffects = GetComponents<IButtonEffect>();
         }
@@ -105,9 +116,16 @@ namespace DeepDreams.UI.Components.Buttons
 
         public virtual void OnPointerClick(PointerEventData eventData)
         {
-            if (!isEnabled || !isClickable) return;
+            if (!isEnabled || !isClickable)
+            {
+                return;
+            }
 
-            if (isToggleable) _isSelected = !_isSelected;
+            if (isToggleable)
+            {
+                _isSelected = !_isSelected;
+            }
+
             ButtonClicked();
 
             onClickEvent?.Invoke();
@@ -115,21 +133,33 @@ namespace DeepDreams.UI.Components.Buttons
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            if (!isEnabled || !isClickable) return;
+            if (!isEnabled || !isClickable)
+            {
+                return;
+            }
 
             _buttonStatus = ButtonStatus.Pressed;
             StartCoroutine(TransitionColor(colorBlock.pressedColor, transitionTime));
 
             if (playClickAudio)
             {
-                if (uiAudioClickOverride) AudioManager.instance.PlayOneShot(uiAudioClickOverride);
-                else OnButtonClick?.Invoke();
+                if (uiAudioClickOverride)
+                {
+                    _audioManager.PlayOneShot(uiAudioClickOverride);
+                }
+                else
+                {
+                    OnButtonClick?.Invoke();
+                }
             }
         }
 
         public virtual void OnPointerEnter(PointerEventData eventData)
         {
-            if (!isEnabled || IsSelected()) return;
+            if (!isEnabled || IsSelected())
+            {
+                return;
+            }
 
             _isHighlighted = true;
             _buttonStatus = ButtonStatus.Highlighted;
@@ -138,23 +168,38 @@ namespace DeepDreams.UI.Components.Buttons
 
             if (playHoverAudio)
             {
-                if (uiAudioHoverOverride) AudioManager.instance.PlayOneShot(uiAudioHoverOverride);
-                else OnButtonHover?.Invoke();
+                if (uiAudioHoverOverride)
+                {
+                    _audioManager.PlayOneShot(uiAudioHoverOverride);
+                }
+                else
+                {
+                    OnButtonHover?.Invoke();
+                }
             }
 
-            foreach (IButtonEffect effect in _buttonEffects) effect.OnHoverEnter();
+            foreach (IButtonEffect effect in _buttonEffects)
+            {
+                effect.OnHoverEnter();
+            }
         }
 
         public virtual void OnPointerExit(PointerEventData eventData)
         {
-            if (!isEnabled || IsSelected()) return;
+            if (!isEnabled || IsSelected())
+            {
+                return;
+            }
 
             _isHighlighted = false;
             _buttonStatus = ButtonStatus.Normal;
 
             StartCoroutine(TransitionColor(colorBlock.normalColor, transitionTime));
 
-            foreach (IButtonEffect effect in _buttonEffects) effect.OnHoverExit();
+            foreach (IButtonEffect effect in _buttonEffects)
+            {
+                effect.OnHoverExit();
+            }
         }
 
         public bool IsSelected()
@@ -212,7 +257,8 @@ namespace DeepDreams.UI.Components.Buttons
                 {
                     // Find the SerializedProperties by name
                     SerializedProperty normalColorProperty = property.FindPropertyRelative(nameof(normalColor));
-                    SerializedProperty highlightedColorProperty = property.FindPropertyRelative(nameof(highlightedColor));
+                    SerializedProperty highlightedColorProperty =
+                        property.FindPropertyRelative(nameof(highlightedColor));
                     SerializedProperty pressedColorProperty = property.FindPropertyRelative(nameof(pressedColor));
                     SerializedProperty disabledColorProperty = property.FindPropertyRelative(nameof(disabledColor));
                     SerializedProperty selectedColorProperty = property.FindPropertyRelative(nameof(selectedColor));
@@ -223,8 +269,10 @@ namespace DeepDreams.UI.Components.Buttons
                     EditorGUI.BeginProperty(position, label, property);
 
                     EditorGUI.indentLevel++;
-                    Rect rect = new Rect(position.x, position.y, position.width, EditorGUI.GetPropertyHeight(normalColorProperty));
-                    normalColorProperty.colorValue = EditorGUI.ColorField(rect, label, normalColorProperty.colorValue, true, true, false);
+                    Rect rect = new Rect(position.x, position.y, position.width,
+                        EditorGUI.GetPropertyHeight(normalColorProperty));
+                    normalColorProperty.colorValue = EditorGUI.ColorField(rect, label, normalColorProperty.colorValue,
+                        true, true, false);
 
                     label.text = highlightedColorProperty.displayName;
                     rect.y += addY;
@@ -233,7 +281,8 @@ namespace DeepDreams.UI.Components.Buttons
 
                     label.text = pressedColorProperty.displayName;
                     rect.y += addY;
-                    pressedColorProperty.colorValue = EditorGUI.ColorField(rect, label, pressedColorProperty.colorValue, true, true, false);
+                    pressedColorProperty.colorValue = EditorGUI.ColorField(rect, label, pressedColorProperty.colorValue,
+                        true, true, false);
 
                     label.text = disabledColorProperty.displayName;
                     rect.y += addY;

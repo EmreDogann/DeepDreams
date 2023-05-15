@@ -1,0 +1,20 @@
+{
+  "name": "SaveLoad",
+  "rootNamespace": "DeepDreams",
+  "references": [
+    "GUID:d01ac35803f63d645b41478698df3bd2",
+    "GUID:48c9f6afdac61634db0e0f241c7d4d51",
+    "GUID:ea6a6314f279f814facc8c48a7d3c9f1",
+    "GUID:8ff7fe6e0ca1bf24e9ec40f8f7a17069",
+    "GUID:8d8924661583a8c4a86bb45bdac7f5dd"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

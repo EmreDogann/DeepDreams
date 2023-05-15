@@ -66,11 +66,6 @@ namespace DeepDreams.Utils
             pobj += IntPtr.Size + GetFieldOffset(fi.FieldHandle);
             return ref Unsafe.AsRef<U>(pobj.ToPointer());
         }
-
-        public static Guid GenerateGuid()
-        {
-            return Guid.NewGuid();
-        }
     }
 
     // From: https://stackoverflow.com/questions/38528620/c-sharp-fieldinfo-reflection-alternatives
@@ -83,7 +78,11 @@ namespace DeepDreams.Utils
         {
             FieldInfo field = type.GetField(fieldName,
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (field == null) throw new ArgumentException();
+
+            if (field == null)
+            {
+                throw new ArgumentException();
+            }
 
             MemberExpression fieldExpression = Expression.Field(
                 Expression.Convert(ownerParameter, type), field);

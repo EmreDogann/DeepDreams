@@ -2,6 +2,7 @@ using System.Collections;
 using DeepDreams.Audio;
 using DeepDreams.Interactions.Surface;
 using DeepDreams.Player.StateMachine.Simple;
+using DeepDreams.Services;
 using UnityEngine;
 
 namespace DeepDreams.Player
@@ -27,9 +28,13 @@ namespace DeepDreams.Player
 
         private Material footstepMaterial;
 
+        private IAudioManager _audioManager;
+
         // Start is called before the first frame update
         private void Awake()
         {
+            _audioManager = ServiceLocator.Instance.GetService<IAudioManager>();
+
             _blackboard = GetComponent<PlayerBlackboard>();
             _blackboard.OnStrideChange += OnStrideChange;
             _blackboard.OnStride += InteractSurface;
@@ -47,7 +52,11 @@ namespace DeepDreams.Player
 
         private void LateUpdate()
         {
-            if (_blackboard.IsGrounded) HandleStride();
+            if (_blackboard.IsGrounded)
+            {
+                HandleStride();
+            }
+
             _prevTransformPos = transform.position;
         }
 
@@ -61,29 +70,42 @@ namespace DeepDreams.Player
                 _blackboard.StrideDistance = _blackboard.PlayerStride - 0.2f;
             }
 
-            if (_blackboard.StrideDistance < _blackboard.PlayerStride) return;
+            if (_blackboard.StrideDistance < _blackboard.PlayerStride)
+            {
+                return;
+            }
 
             _prevStridePos = transform.position;
             _blackboard.StrideDistance = 0;
             _blackboard.OnStride?.Invoke();
             // InteractSurface();
 
-            if (_coroutine != null) StopCoroutine(_coroutine);
+            if (_coroutine != null)
+            {
+                StopCoroutine(_coroutine);
+            }
+
             _coroutine = StartCoroutine(ToggleFootstep());
         }
 
         private void InteractSurface()
         {
-            if (Physics.SphereCast(transform.position + Vector3.up * (collisionRadius + 0.01f), collisionRadius, Vector3.down, out _hit,
+            if (Physics.SphereCast(transform.position + Vector3.up * (collisionRadius + 0.01f), collisionRadius,
+                    Vector3.down, out _hit,
                     collisionRadius,
                     collisionDetectionLayerMask))
             {
                 if (_hit.transform.TryGetComponent(out ISteppable component))
                 {
-                    if (_blackboard.currentPlayerState == PlayerState.Walking || _blackboard.currentPlayerState == PlayerState.CrouchWalk)
-                        AudioManager.instance.PlayOneShot(component.GetSurfaceData().walkSound);
+                    if (_blackboard.currentPlayerState == PlayerState.Walking ||
+                        _blackboard.currentPlayerState == PlayerState.CrouchWalk)
+                    {
+                        _audioManager.PlayOneShot(component.GetSurfaceData().walkSound);
+                    }
                     else if (_blackboard.currentPlayerState == PlayerState.Running)
-                        AudioManager.instance.PlayOneShot(component.GetSurfaceData().runSound);
+                    {
+                        _audioManager.PlayOneShot(component.GetSurfaceData().runSound);
+                    }
                 }
             }
         }
@@ -98,8 +120,14 @@ namespace DeepDreams.Player
 
         private IEnumerator ToggleFootstep()
         {
-            if (_blackboard.currentPlayerState == PlayerState.Running) footstepMaterial.color = new Color(0.15f, 0.0f, 0.0f, 1.0f);
-            else footstepMaterial.color = new Color(0.05f, 0.0f, 0.0f, 1.0f);
+            if (_blackboard.currentPlayerState == PlayerState.Running)
+            {
+                footstepMaterial.color = new Color(0.15f, 0.0f, 0.0f, 1.0f);
+            }
+            else
+            {
+                footstepMaterial.color = new Color(0.05f, 0.0f, 0.0f, 1.0f);
+            }
 
             footstepMesh.SetActive(true);
             yield return meshLifetime == 0 ? new WaitForEndOfFrame() : new WaitForSeconds(meshLifetime);

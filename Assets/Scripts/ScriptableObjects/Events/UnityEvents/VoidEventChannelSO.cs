@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DeepDreams.ScriptableObjects.Events.UnityEvents
 {
-    [CreateAssetMenu(fileName = "New Void Event", menuName = "Game Event/Unity Event/Void Event", order = 1)]
+    [CreateAssetMenu(fileName = "New Void Event", menuName = "Game Event/Unity Event/Void Event", order = 3)]
     public class VoidEventChannelSO : ScriptableObject
     {
         private readonly List<VoidEventListener> listeners = new List<VoidEventListener>();

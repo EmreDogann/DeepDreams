@@ -2,6 +2,7 @@
 using DeepDreams.Audio;
 using DeepDreams.Player.PlayerCamera;
 using DeepDreams.ScriptableObjects.Audio;
+using DeepDreams.Services;
 using DeepDreams.ThirdPartyAssets.GG_Camera_Shake.Runtime;
 using MyBox;
 using UnityEngine;
@@ -46,8 +47,11 @@ namespace DeepDreams.Player
         private Vector3 _initialCameraPosition;
         private float _crouchingVelocity;
 
+        private IAudioManager _audioManager;
+
         private void Awake()
         {
+            _audioManager = ServiceLocator.Instance.GetService<IAudioManager>();
             _blackboard = GetComponent<PlayerBlackboard>();
             _playerController = _blackboard._Controller;
 
@@ -79,13 +83,24 @@ namespace DeepDreams.Player
 
                 cameraCrouchAnimation.Invert(1);
             }
-            else cameraCrouchAnimation.Invert(-1);
+            else
+            {
+                cameraCrouchAnimation.Invert(-1);
+            }
 
-            if (_checkCollisionCoroutine != null) StopCoroutine(_checkCollisionCoroutine);
-            if (_crouchCoroutine != null) StopCoroutine(_crouchCoroutine);
+            if (_checkCollisionCoroutine != null)
+            {
+                StopCoroutine(_checkCollisionCoroutine);
+            }
+
+            if (_crouchCoroutine != null)
+            {
+                StopCoroutine(_crouchCoroutine);
+            }
+
             _crouchCoroutine = StartCoroutine(PerformCrouch(toggleOn));
 
-            AudioManager.instance.PlayOneShot(crouchSound);
+            _audioManager.PlayOneShot(crouchSound);
         }
 
         private IEnumerator PerformCrouch(bool toggleOn)
@@ -100,7 +115,11 @@ namespace DeepDreams.Player
             {
                 if (IsNotStanding && !_blackboard.IsCrouching)
                 {
-                    if (_checkCollisionCoroutine != null) StopCoroutine(_checkCollisionCoroutine);
+                    if (_checkCollisionCoroutine != null)
+                    {
+                        StopCoroutine(_checkCollisionCoroutine);
+                    }
+
                     _checkCollisionCoroutine = StartCoroutine(CheckHeightClearanceCoroutine());
                 }
 
@@ -108,15 +127,23 @@ namespace DeepDreams.Player
                 // _currentHeight = Mathf.Lerp(_currentHeight, _heightTarget, crouchDelta);
                 // float crouchDelta = 1 / 0.3f * Time.deltaTime;
                 // _currentHeight = Mathf.MoveTowards(_currentHeight, _heightTarget, crouchDelta);
-                _currentHeight = Mathf.SmoothDamp(_currentHeight, _heightTarget, ref _crouchingVelocity, crouchDuration);
+                _currentHeight =
+                    Mathf.SmoothDamp(_currentHeight, _heightTarget, ref _crouchingVelocity, crouchDuration);
 
                 SetPlayerHeight(_currentHeight);
 
                 if (Mathf.Abs(finalHeightTarget - _currentHeight) < 0.7f && !crouchAnimStarted)
                 {
                     crouchAnimStarted = true;
-                    if (!CameraShaker.Contains(cameraCrouchAnimation)) CameraShaker.Shake(cameraCrouchAnimation);
-                    else cameraCrouchAnimation.Initialize();
+
+                    if (!CameraShaker.Contains(cameraCrouchAnimation))
+                    {
+                        CameraShaker.Shake(cameraCrouchAnimation);
+                    }
+                    else
+                    {
+                        cameraCrouchAnimation.Initialize();
+                    }
                 }
 
                 yield return null;
@@ -154,7 +181,8 @@ namespace DeepDreams.Player
             // DebugExtension.DebugWireSphere(origin + Vector3.up * (_standingHeight - _currentHeight + 0.01f), Color.red,
             // crouchCollisionRadius, collisionDetectionCooldown);
 
-            if (Physics.SphereCast(origin, crouchCollisionRadius, Vector3.up, out _hit, _standingHeight - _currentHeight + 0.01f,
+            if (Physics.SphereCast(origin, crouchCollisionRadius, Vector3.up, out _hit,
+                    _standingHeight - _currentHeight + 0.01f,
                     collisionDetectionLayerMask))
             {
                 float distanceToCeiling = _hit.point.y - crouchCollisionRadius - origin.y;
@@ -164,7 +192,10 @@ namespace DeepDreams.Player
                 // Vector3 targetPosDebug = origin + Vector3.up * distanceToCeiling;
                 // DebugExtension.DebugWireSphere(targetPosDebug, Color.green, crouchCollisionRadius, collisionDetectionCooldown);
             }
-            else _blackboard.IsCrouchingBlocked = false;
+            else
+            {
+                _blackboard.IsCrouchingBlocked = false;
+            }
         }
     }
 }

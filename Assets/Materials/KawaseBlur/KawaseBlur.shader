@@ -51,10 +51,10 @@
 
             fixed4 frag (v2f input) : SV_Target
             {
-                float2 res = _MainTex_TexelSize.xy;
+                const float2 res = _MainTex_TexelSize.xy;
                 float i = _offset;
     
-                fixed4 col;                
+                fixed4 col = fixed4(0,0,0,0);
                 col.rgb = tex2D( _MainTex, input.uv ).rgb;
                 col.rgb += tex2D( _MainTex, input.uv + float2( i, i ) * res ).rgb;
                 col.rgb += tex2D( _MainTex, input.uv + float2( i, -i ) * res ).rgb;

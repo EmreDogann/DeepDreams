@@ -1,0 +1,67 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6783624139921020619
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6783624139921020618}
+  - component: {fileID: 6783624139921020617}
+  m_Layer: 0
+  m_Name: Save Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6783624139921020618
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6783624139921020619}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6783624139921020617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6783624139921020619}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09550c4c95654e079c79982f07158af5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  saveFileDescriptors:
+  - fileName: config.ini
+    dataType:
+      GuidAssignmentFailed: 0
+      GUID: 0163d1737dbb4908af9d4b9672de8f54
+      _typeNameAndAssembly: DeepDreams.SaveLoad.Data.SettingsData, SaveLoad
+      _suppressLogs: 0
+    useEncryption: 0
+  - fileName: save.ini
+    dataType:
+      GuidAssignmentFailed: 0
+      GUID: 48fc7ecaebaf492dbd47f2604b008cee
+      _typeNameAndAssembly: DeepDreams.SaveLoad.Data.GameData, SaveLoad
+      _suppressLogs: 0
+    useEncryption: 0
+  sceneBlacklist:
+  - Scene: {fileID: 102900000, guid: 0a3fe81a22f11564eb08bdea255063e9, type: 3}
+    SceneName: ManagerLevel
+    sceneIndex: 0
+    sceneEnabled: 1
+  prefab: {fileID: 0}

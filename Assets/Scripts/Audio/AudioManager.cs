@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DeepDreams.ScriptableObjects.Audio;
+using DeepDreams.Services;
 using FMOD.Studio;
 using FMODUnity;
 using UnityEngine;
@@ -7,20 +8,21 @@ using STOP_MODE = FMOD.Studio.STOP_MODE;
 
 namespace DeepDreams.Audio
 {
-    public class AudioManager : MonoBehaviour
+    public class AudioManager : MonoBehaviour, IAudioManager
     {
         [SerializeField] private List<BusReference> busReferences;
         private Dictionary<BusReference, Bus> _audioBuses;
-        public static AudioManager instance { get; private set; }
 
         private void Awake()
         {
-            if (instance != null) Debug.LogError("Found more than one Audio Manager in the scene.");
-
-            instance = this;
+            ServiceLocator.Instance.Register<IAudioManager>(this);
 
             _audioBuses = new Dictionary<BusReference, Bus>();
-            foreach (BusReference bus in busReferences) _audioBuses[bus] = RuntimeManager.GetBus(bus.busPath);
+
+            foreach (BusReference bus in busReferences)
+            {
+                _audioBuses[bus] = RuntimeManager.GetBus(bus.busPath);
+            }
         }
 
         public void PlayOneShot(AudioReference sound, Vector3 worldPos = default)
@@ -46,8 +48,14 @@ namespace DeepDreams.Audio
 
         public void StopAllEvents(BusReference bus, bool immediate)
         {
-            if (immediate) _audioBuses[bus].stopAllEvents(STOP_MODE.IMMEDIATE);
-            else _audioBuses[bus].stopAllEvents(STOP_MODE.ALLOWFADEOUT);
+            if (immediate)
+            {
+                _audioBuses[bus].stopAllEvents(STOP_MODE.IMMEDIATE);
+            }
+            else
+            {
+                _audioBuses[bus].stopAllEvents(STOP_MODE.ALLOWFADEOUT);
+            }
         }
 
         public void Pause(BusReference bus, bool paused)

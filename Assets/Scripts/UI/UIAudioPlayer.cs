@@ -1,6 +1,7 @@
 ﻿using DeepDreams.Audio;
 using DeepDreams.ScriptableObjects.Audio;
 using DeepDreams.ScriptableObjects.Events.UnityEvents;
+using DeepDreams.Services;
 using DeepDreams.UI.Components.Buttons;
 using MyBox;
 using UnityEngine;
@@ -19,9 +20,11 @@ namespace DeepDreams.UI
         [SerializeField] private AudioReference pauseAudio;
 
         private BoolEventListener _onGamePausedEvent;
+        private IAudioManager _audioManager;
 
         private void Awake()
         {
+            _audioManager = ServiceLocator.Instance.GetService<IAudioManager>();
             _onGamePausedEvent = GetComponent<BoolEventListener>();
         }
 
@@ -43,28 +46,31 @@ namespace DeepDreams.UI
 
         private void OnCancel(bool isPaused)
         {
-            if (isPaused) AudioManager.instance.PlayOneShot(backAudio);
+            if (isPaused)
+            {
+                _audioManager.PlayOneShot(backAudio);
+            }
         }
 
         private void OnGamePaused(bool isPaused)
         {
             if (isPaused)
             {
-                AudioManager.instance.StopAllEvents(masterBus, false);
-                AudioManager.instance.PlayOneShot(pauseAudio);
+                _audioManager.StopAllEvents(masterBus, false);
+                _audioManager.PlayOneShot(pauseAudio);
             }
         }
 
         private void OnUIHover()
         {
             AudioReference audio = hoverAudio;
-            AudioManager.instance.PlayOneShot(audio);
+            _audioManager.PlayOneShot(audio);
         }
 
         private void OnUIClick()
         {
             AudioReference audio = clickAudio;
-            AudioManager.instance.PlayOneShot(audio);
+            _audioManager.PlayOneShot(audio);
         }
     }
 }
