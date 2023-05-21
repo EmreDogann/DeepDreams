@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DeepDreams.SaveLoad.Data;
 using DeepDreams.Services;
@@ -13,17 +14,42 @@ using Application = UnityEngine.Device.Application;
 
 namespace DeepDreams.SaveLoad
 {
+    [Serializable]
+    public class SaveFileDescriptor
+    {
+        public string fileName = "newfile.ini";
+        [Inherits(typeof(SaveData), ShowNoneElement = false, Grouping = Grouping.None, ShortName = true)]
+        public TypeReference dataType = typeof(GameData);
+        public bool useEncryption;
+#if UNITY_EDITOR
+        public void ClearFileData()
+        {
+            EditorUtility.OpenWithDefaultApp(Application.persistentDataPath);
+
+            string fullFilePath = Path.Combine(Application.persistentDataPath, fileName);
+
+            try
+            {
+                using (FileStream fs = new FileStream(fullFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite))
+                {
+                    lock (fs)
+                    {
+                        fs.SetLength(0);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error occured when trying to clear file: {fullFilePath}\n{e}");
+            }
+
+            Debug.Log($"<color=green>{fullFilePath}</color> data cleared!");
+        }
+#endif
+    }
+
     public class SaveManager : MonoBehaviour, ISaveManager
     {
-        [Serializable]
-        private class SaveFileDescriptor
-        {
-            public string fileName;
-            [Inherits(typeof(SaveData), ShowNoneElement = false, Grouping = Grouping.None, ShortName = true)]
-            public TypeReference dataType;
-            public bool useEncryption;
-        }
-
         [Tooltip("Configuration options for save files.")]
         [SerializeField] private List<SaveFileDescriptor> saveFileDescriptors;
         [Tooltip("The scenes to exclude from saving and loading actions.")]

@@ -64,4 +64,3 @@ MonoBehaviour:
     SceneName: ManagerLevel
     sceneIndex: 0
     sceneEnabled: 1
-  prefab: {fileID: 0}

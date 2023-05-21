@@ -2,7 +2,9 @@
     "name": "SaveLoad.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:9976edf11b979fb4d8479c7df9696946"
+        "GUID:9976edf11b979fb4d8479c7df9696946",
+        "GUID:ea6a6314f279f814facc8c48a7d3c9f1",
+        "GUID:c4a5aaa04253f374f9318b997e4012ea"
     ],
     "includePlatforms": [
         "Editor"

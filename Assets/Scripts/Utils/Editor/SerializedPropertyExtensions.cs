@@ -16,9 +16,8 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
-namespace DeepDreams.Utils
+namespace DeepDreams.Utils.Editor
 {
-#if UNITY_EDITOR
     public static class SerializedPropertyExtensions
     {
         public static T GetValue<T>(this SerializedProperty property) where T : class
@@ -35,7 +34,10 @@ namespace DeepDreams.Utils
                     int index = Convert.ToInt32(new string(fieldStructure[i].Where(c => char.IsDigit(c)).ToArray()));
                     obj = GetFieldValueWithIndex(rgx.Replace(fieldStructure[i], ""), obj, index);
                 }
-                else obj = GetFieldValue(fieldStructure[i], obj);
+                else
+                {
+                    obj = GetFieldValue(fieldStructure[i], obj);
+                }
             }
 
             return (T)obj;
@@ -55,7 +57,10 @@ namespace DeepDreams.Utils
                     int index = Convert.ToInt32(new string(fieldStructure[i].Where(c => char.IsDigit(c)).ToArray()));
                     obj = GetFieldValueWithIndex(rgx.Replace(fieldStructure[i], ""), obj, index);
                 }
-                else obj = GetFieldValue(fieldStructure[i], obj);
+                else
+                {
+                    obj = GetFieldValue(fieldStructure[i], obj);
+                }
             }
 
             string fieldName = fieldStructure.Last();
@@ -71,30 +76,46 @@ namespace DeepDreams.Utils
         }
 
         private static object GetFieldValue(string fieldName, object obj,
-            BindingFlags bindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+            BindingFlags bindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public |
+                                    BindingFlags.NonPublic)
         {
             FieldInfo field = obj.GetType().GetField(fieldName, bindings);
-            if (field != null) return field.GetValue(obj);
+
+            if (field != null)
+            {
+                return field.GetValue(obj);
+            }
+
             return default;
         }
 
         private static object GetFieldValueWithIndex(string fieldName, object obj, int index,
-            BindingFlags bindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+            BindingFlags bindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public |
+                                    BindingFlags.NonPublic)
         {
             FieldInfo field = obj.GetType().GetField(fieldName, bindings);
 
             if (field != null)
             {
                 object list = field.GetValue(obj);
-                if (list.GetType().IsArray) return ((object[])list)[index];
-                if (list is IEnumerable) return ((IList)list)[index];
+
+                if (list.GetType().IsArray)
+                {
+                    return ((object[])list)[index];
+                }
+
+                if (list is IEnumerable)
+                {
+                    return ((IList)list)[index];
+                }
             }
 
             return default;
         }
 
         public static bool SetFieldValue(string fieldName, object obj, object value, bool includeAllBases = false,
-            BindingFlags bindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+            BindingFlags bindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public |
+                                    BindingFlags.NonPublic)
         {
             FieldInfo field = obj.GetType().GetField(fieldName, bindings);
 
@@ -107,8 +128,10 @@ namespace DeepDreams.Utils
             return false;
         }
 
-        public static bool SetFieldValueWithIndex(string fieldName, object obj, int index, object value, bool includeAllBases = false,
-            BindingFlags bindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+        public static bool SetFieldValueWithIndex(string fieldName, object obj, int index, object value,
+            bool includeAllBases = false,
+            BindingFlags bindings = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public |
+                                    BindingFlags.NonPublic)
         {
             FieldInfo field = obj.GetType().GetField(fieldName, bindings);
 
@@ -132,5 +155,4 @@ namespace DeepDreams.Utils
             return false;
         }
     }
-#endif
 }
