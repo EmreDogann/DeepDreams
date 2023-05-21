@@ -249,6 +249,13 @@
         "com.unity.render-pipelines.core": "12.1.11"
       }
     },
+    "com.wooshii.foldericons": {
+      "version": "https://github.com/EmreDogann/Unity-Folder-Icons.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "4e2fb7f9a2cd41f7fe63b3f4e57b97db1b825484"
+    },
     "com.wooshii.hierarchydecorator": {
       "version": "https://github.com/WooshiiDev/HierarchyDecorator.git",
       "depth": 0,

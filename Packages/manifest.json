@@ -17,6 +17,7 @@
     "com.unity.timeline": "1.6.5",
     "com.unity.ugui": "1.0.0",
     "com.unity.visualeffectgraph": "12.1.11",
+    "com.wooshii.foldericons": "https://github.com/EmreDogann/Unity-Folder-Icons.git",
     "com.wooshii.hierarchydecorator": "https://github.com/WooshiiDev/HierarchyDecorator.git",
     "jillejr.newtonsoft.json-for-unity.converters": "1.5.1",
     "com.unity.modules.ai": "1.0.0",

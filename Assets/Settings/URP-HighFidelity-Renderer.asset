@@ -1,5 +1,32 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7790322757961249509
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bf81cc44e7929d4497e6858c996b0e5, type: 3}
+  m_Name: Custom Blur
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  renderPassEvent: 450
+  settings:
+    copyToCameraFramebuffer: 0
+    showInSceneView: 0
+    dithering: 1
+    blurTextureName: _BlurTexture
+    blurModes: 1
+  gaussianSettings:
+    iterations: 64
+    blurSize: 0.2
+    standardDeviation: 0.03
+  kawaseDualFilterSettings:
+    blurPasses: 3
+    blurSize: 4
 --- !u!114 &-2210654903911374551
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15,16 +42,16 @@ MonoBehaviour:
   m_Active: 1
   shader: {fileID: 4800000, guid: 6b7e6acc194204408b3294f5c220fc1e, type: 3}
   blendMode: 0
-  renderPassEvent: 450
-  downscaling: 1.3
-  blurPasses: 2
+  renderPassEvent: 350
+  downscaling: 1
+  blurPasses: 3
   blurDownscaling: 1
-  blurSpread: 2
+  blurSpread: 4
   blurHDR: 1
   blurEdgePreserve: 1
-  blurEdgeDepthThreshold: 5
+  blurEdgeDepthThreshold: 10
   brightness: 1
-  ditherStrength: 0
+  ditherStrength: 0.05
 --- !u!114 &-1878332245247344467
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40,14 +67,14 @@ MonoBehaviour:
   m_Active: 1
   m_Shader: {fileID: 4800000, guid: 0849e84e3d62649e8882e9d6f056a017, type: 3}
   m_Settings:
-    Downsample: 0
+    Downsample: 1
     AfterOpaque: 0
     Source: 0
     NormalSamples: 1
-    Intensity: 0.2
+    Intensity: 0.04
     DirectLightingStrength: 0.25
-    Radius: 0.15
-    SampleCount: 12
+    Radius: 0.1
+    SampleCount: 5
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -67,7 +94,8 @@ MonoBehaviour:
   - {fileID: -1878332245247344467}
   - {fileID: 5936883545440994551}
   - {fileID: -2210654903911374551}
-  m_RendererFeatureMap: adc0de57c6d2eee5f744df2e210c6452292163d3132d52e1
+  - {fileID: -7790322757961249509}
+  m_RendererFeatureMap: adc0de57c6d2eee5f744df2e210c6452292163d3132d52e11b0d14feb936e393
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -89,10 +117,10 @@ MonoBehaviour:
   m_AssetVersion: 2
   m_OpaqueLayerMask:
     serializedVersion: 2
-    m_Bits: 2147483647
+    m_Bits: 4294967295
   m_TransparentLayerMask:
     serializedVersion: 2
-    m_Bits: 2147483647
+    m_Bits: 4294967295
   m_DefaultStencilState:
     overrideStencilState: 0
     stencilReference: 0
@@ -120,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52e2e32e102e44abeb72209e7ce030c3, type: 3}
   m_Name: KawaseBlur
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   settings:
     renderPassEvent: 450
     blurMaterial: {fileID: 2100000, guid: a00afda211f274f6ca6cce958e4e13a5, type: 2}
