@@ -16,6 +16,8 @@
 		Cull off ZWrite off ZTest Always
 
 		HLSLINCLUDE
+		#pragma target 3.0
+		#pragma fragmentoption ARB_precision_hint_fastest
 		#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 		#include "Assets/Materials/Shaders/Dither.hlsl"
 
@@ -43,10 +45,6 @@
 			float2 uv		: TEXCOORD0;
 		};
 
-		// Textures, Samplers & Global Properties
-		TEXTURE2D(_MainTex);
-		SAMPLER(sampler_MainTex);
-
 		// Vertex Shader
 		Varyings vert(Attributes i) {
 			Varyings o;
@@ -58,6 +56,10 @@
 		}
 
 		CBUFFER_START(UnityPerMaterial)
+			// Textures, Samplers & Global Properties
+			TEXTURE2D(_MainTex);
+			float4 _MainTex_TexelSize;
+		
 			int _Iterations;
 			float _BlurSize;
 			float _StandardDeviation;
@@ -67,9 +69,41 @@
 		CBUFFER_END
 
 		ENDHLSL
+		
+		Pass {
+			Name "Copy"
+
+			HLSLPROGRAM
+			// Fragment Shader
+			float4 frag(Varyings i) : SV_TARGET
+			{
+				return SAMPLE_TEXTURE2D(_MainTex , sampler_LinearClamp, i.uv);
+			}
+			ENDHLSL
+		}
+		
+		Pass {
+			Name "Initial Downsample"
+
+			HLSLPROGRAM
+			// Fragment Shader
+			float4 frag(Varyings i) : SV_TARGET
+			{
+				float4 d = _MainTex_TexelSize.xyxy * float4(-1.0, -1.0, 1.0, 1.0) * _BlurSize;
+
+			    half4 s;
+			    s =  (SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, i.uv + d.xy));
+			    s += (SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, i.uv + d.zy));
+			    s += (SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, i.uv + d.xw));
+			    s += (SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, i.uv + d.zw));
+
+			    return s * (1.0 / 4.0);
+			}
+			ENDHLSL
+		}
 
 		Pass {
-			Name "Vertical Pass"
+			Name "Vertical Blur"
 
 			HLSLPROGRAM
 			// Fragment Shader
@@ -78,7 +112,7 @@
 				// failsafe so we can turn off the blur by setting the deviation to 0.
 				if (_StandardDeviation == 0)
 				{
-					return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+					return SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, i.uv);
 				}
 
 				float4 color = 0;
@@ -95,14 +129,10 @@
 
 					sum += gaussian;
 
-					color += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv) * gaussian;
+					color += SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv) * gaussian;
 				}
 
 				color = color / sum;
-
-				#ifdef ENABLE_DITHERING
-				ApplyDither(color, i.uv, TEXTURE2D_ARGS(_BlueNoise, sampler_PointRepeat), DitheringScale, i.positionCS.xy);
-				#endif
 
 				return color;
 			}
@@ -110,7 +140,7 @@
 		}
 		
 		Pass {
-			Name "Horizontal Pass"
+			Name "Horizontal Blur"
 
 			HLSLPROGRAM
 			// Fragment Shader
@@ -120,7 +150,7 @@
 				// Gaussian blur breaks at 0.
 				if (_StandardDeviation == 0)
 				{
-					return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+					return SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, i.uv);
 				}
 
 				//calculate aspect ratio
@@ -140,7 +170,7 @@
 
 					sum += gaussian;
 
-					color += SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv) * gaussian;
+					color += SAMPLE_TEXTURE2D(_MainTex, sampler_LinearClamp, uv) * gaussian;
 				}
 
 				color = color / sum;

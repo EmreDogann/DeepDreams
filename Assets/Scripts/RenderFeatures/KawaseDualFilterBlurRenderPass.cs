@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
@@ -14,14 +15,17 @@ namespace DeepDreams.RenderFeatures
             [Range(0, 6)] public int blurPasses = 2;
             [Tooltip("The size (strength) of the blur at each pass. Higher = more blur.")]
             [Range(0.0f, 10.0f)] public float blurSize = 1.0f;
+            [Tooltip("Use high quality bilinear sampling (more expensive but can help mitigate artifacts)")]
+            public bool highQualityFiltering = true;
         }
 
         private enum ShaderPass
         {
             Copy = 0,
-            DownSample = 1,
-            UpSample = 2,
-            UpSampleDither = 3
+            DownSampleAntiFlicker = 1,
+            DownSample = 2,
+            UpSample = 3,
+            FinalUpSample = 4
         }
 
         // Settings
@@ -30,17 +34,19 @@ namespace DeepDreams.RenderFeatures
         private readonly CustomBlurRenderFeature.Settings _featureSettings;
 
         // Resources
-        private readonly Material _blurMaterial;
+        private readonly Material _material;
         private readonly Texture2D _blueNoiseTexture;
 
         // Render Targets
-        private RenderTargetIdentifier _colorTarget, _startTarget, _endTarget;
+        private RenderTargetIdentifier _colorTarget;
+        private readonly RenderTargetIdentifier[] _mipUpTarget;
+        private readonly RenderTargetIdentifier[] _mipDownTarget;
         private RenderTextureDescriptor _cameraDescriptor, _targetsDescriptor;
+        private readonly GraphicsFormat _hdrFormat;
 
         // Shader property IDs
-        private readonly int EndTargetID = Shader.PropertyToID("_EndTarget");
-        private readonly int StartTargetID = Shader.PropertyToID("_StartTarget");
-        private readonly int BlendTexProperty = Shader.PropertyToID("_BlendTex");
+        private readonly int[] _mipUpID;
+        private readonly int[] _mipDownID;
         private readonly int BlueNoiseProperty = Shader.PropertyToID("_BlueNoise");
         private readonly int BlurSizeProperty = Shader.PropertyToID("_BlurSize");
         private readonly int DitheringParamsProperty = Shader.PropertyToID("_Dithering_Params");
@@ -55,22 +61,60 @@ namespace DeepDreams.RenderFeatures
             _blurSettings = blurSettings;
             _featureSettings = featureSettings;
 
-            if (_blurMaterial == null)
+            if (_material == null)
             {
-                _blurMaterial = CoreUtils.CreateEngineMaterial("Hidden/Blur/KawaseDualFilterBlur");
+                _material = CoreUtils.CreateEngineMaterial("Hidden/Blur/KawaseDualFilterBlur");
                 _blueNoiseTexture = Resources.Load<Texture2D>("Blue Noise/LDR_RGBA_0");
 
                 if (_blueNoiseTexture != null)
                 {
-                    _blurMaterial.SetTexture(BlueNoiseProperty, _blueNoiseTexture);
+                    _material.SetTexture(BlueNoiseProperty, _blueNoiseTexture);
                 }
+            }
+
+            if (_blurSettings.highQualityFiltering)
+            {
+                _material.EnableKeyword("_HQ_FILTERING");
+            }
+            else
+            {
+                _material.DisableKeyword("_HQ_FILTERING");
+            }
+
+            _mipUpID = new int[_blurSettings.blurPasses];
+            _mipDownID = new int[_blurSettings.blurPasses];
+            _mipUpTarget = new RenderTargetIdentifier[_blurSettings.blurPasses];
+            _mipDownTarget = new RenderTargetIdentifier[_blurSettings.blurPasses];
+
+            for (int i = 0; i < _blurSettings.blurPasses; i++)
+            {
+                _mipUpID[i] = Shader.PropertyToID("_MipUp" + i);
+                _mipDownID[i] = Shader.PropertyToID("_MipDown" + i);
+                _mipUpTarget[i] = new RenderTargetIdentifier(_mipUpID[i]);
+                _mipDownTarget[i] = new RenderTargetIdentifier(_mipDownID[i]);
+            }
+
+            const FormatUsage usage = FormatUsage.Linear | FormatUsage.Render;
+            if (SystemInfo.IsFormatSupported(GraphicsFormat.B10G11R11_UFloatPack32, usage) &&
+                featureSettings.hdrFiltering) // HDR fallback
+            {
+                _hdrFormat = GraphicsFormat.B10G11R11_UFloatPack32;
+            }
+            else
+            {
+                _hdrFormat = QualitySettings.activeColorSpace == ColorSpace.Linear
+                    ? GraphicsFormat.R8G8B8A8_SRGB
+                    : GraphicsFormat.R8G8B8A8_UNorm;
             }
         }
 
         // Called per-pass
         // Same as OnCameraSetup() below.
         // public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
-        // {}
+        // {
+        // ConfigureTarget(_mipUpTarget);
+        // ConfigureClear(ClearFlag.All, Color.black);
+        // }
 
         // Called per-camera.
         // Gets called by the renderer before executing the pass.
@@ -83,50 +127,44 @@ namespace DeepDreams.RenderFeatures
             _cameraDescriptor = renderingData.cameraData.cameraTargetDescriptor;
 
             // Set the number of depth bits we need for our temporary render texture.
-            _cameraDescriptor.depthBufferBits = 0;
+            _targetsDescriptor = _cameraDescriptor;
+            _targetsDescriptor.depthBufferBits = 0;
 
             // Start out at half res.
-            _targetsDescriptor = _cameraDescriptor;
-            _targetsDescriptor.width /= 2;
-            _targetsDescriptor.height /= 2;
+            _targetsDescriptor.width >>= 1; // Bitwise right shift 1 = Divide by 2.
+            _targetsDescriptor.height >>= 1;
             _targetsDescriptor.useMipMap = false;
+            _targetsDescriptor.graphicsFormat = _hdrFormat;
 
-            // Helps prevent overblowing lights in the scene. That is useful for bloom but I don't want it here.
-            // _targetsDescriptor.colorFormat = RenderTextureFormat.ARGBFloat;
-            // _targetsDescriptor.graphicsFormat = GraphicsFormat.R32G32B32A32_SFloat;
+            // Create temporary render textures using the target descriptor from above.
+            for (int i = 0; i < _blurSettings.blurPasses; i++)
+            {
+                cmd.GetTemporaryRT(_mipUpID[i], _targetsDescriptor, FilterMode.Bilinear);
+                cmd.GetTemporaryRT(_mipDownID[i], _targetsDescriptor, FilterMode.Bilinear);
+                _targetsDescriptor.width = Mathf.Max(1, _targetsDescriptor.width >> 1);
+                _targetsDescriptor.height = Mathf.Max(1, _targetsDescriptor.height >> 1);
+            }
 
-            // Create a temporary render texture using the descriptor from above.
-            cmd.GetTemporaryRT(EndTargetID, _targetsDescriptor, FilterMode.Bilinear);
-            cmd.GetTemporaryRT(StartTargetID, _targetsDescriptor, FilterMode.Bilinear);
-            _endTarget = new RenderTargetIdentifier(EndTargetID);
-            _startTarget = new RenderTargetIdentifier(StartTargetID);
-
-            _blurMaterial.SetFloat(BlurSizeProperty, _blurSettings.blurSize);
+            _material.SetFloat(BlurSizeProperty, _blurSettings.blurSize);
 
             if (_featureSettings.dithering)
             {
-                _blurMaterial.EnableKeyword("ENABLE_DITHERING");
+                _material.EnableKeyword("ENABLE_DITHERING");
 
-                _blurMaterial.SetVector(DitheringParamsProperty, new Vector4(
+                _material.SetVector(DitheringParamsProperty, new Vector4(
                     renderingData.cameraData.camera.scaledPixelWidth / (float)_blueNoiseTexture.width,
                     renderingData.cameraData.camera.scaledPixelHeight / (float)_blueNoiseTexture.height,
-                    1,
-                    1
+                    1, // Unused
+                    1  // Unused
                 ));
             }
             else
             {
-                _blurMaterial.DisableKeyword("ENABLE_DITHERING");
+                _material.DisableKeyword("ENABLE_DITHERING");
             }
 
             // Grab the color buffer from the renderer camera color target.
             _colorTarget = renderingData.cameraData.renderer.cameraColorTarget;
-
-            // Who knows what the point of this is when it invalidates the state changes made from the first ConfigureTarget() call.
-            // https://bronsonzgeb.com/index.php/2021/03/20/pseudo-metaballs-with-scriptable-renderer-features-in-unitys-urp/
-            ConfigureTarget(_endTarget);
-            ConfigureTarget(_startTarget);
-            // ConfigureClear(ClearFlag.All, Color.clear);
         }
 
         public void SetTarget(RenderTargetIdentifier camerColorTargetIdentifier)
@@ -143,68 +181,43 @@ namespace DeepDreams.RenderFeatures
             }
 
             CommandBuffer cmd = CommandBufferPool.Get();
-
             using (new ProfilingScope(cmd, new ProfilingSampler(_profilerTag)))
             {
-                // For Gaussian Blur
-                // // Blit from the color buffer to a temporary buffer and back. This is needed for a two-pass shader.
-                // Blit(cmd, _colorTarget, _temporaryBuffer, _material, 0);
-                // // ReSharper disable once RedundantArgumentDefaultValue
-                // Blit(cmd, _temporaryBuffer, _colorTarget, _material, 1);
-
-                // First pass
-                Blit(cmd, _colorTarget, _endTarget, _blurMaterial, (int)ShaderPass.DownSample);
-                cmd.CopyTexture(_endTarget, _startTarget);
-
-                cmd.ReleaseTemporaryRT(EndTargetID);
-
                 // Downsample pass
-                for (int i = 0; i < _blurSettings.blurPasses - 1; i++)
+                RenderTargetIdentifier lastDown = _colorTarget;
+                for (int i = 0; i < _blurSettings.blurPasses; i++)
                 {
-                    _targetsDescriptor.width /= 2;
-                    _targetsDescriptor.height /= 2;
+                    if (i == 0)
+                    {
+                        Blit(cmd, lastDown, _mipDownTarget[i], _material, (int)ShaderPass.DownSampleAntiFlicker);
+                    }
+                    else
+                    {
+                        Blit(cmd, lastDown, _mipDownTarget[i], _material, (int)ShaderPass.DownSample);
+                    }
 
-                    cmd.GetTemporaryRT(EndTargetID, _targetsDescriptor, FilterMode.Bilinear);
-
-                    Blit(cmd, _startTarget, _endTarget, _blurMaterial, (int)ShaderPass.DownSample);
-
-                    cmd.ReleaseTemporaryRT(StartTargetID);
-                    cmd.GetTemporaryRT(StartTargetID, _targetsDescriptor, FilterMode.Bilinear);
-                    cmd.CopyTexture(_endTarget, _startTarget);
-
-                    cmd.ReleaseTemporaryRT(EndTargetID);
+                    lastDown = _mipDownTarget[i];
                 }
 
                 // Upsample pass
-                for (int i = _blurSettings.blurPasses - 1; i >= 0; i--)
+                RenderTargetIdentifier lastUp = _mipDownTarget[_blurSettings.blurPasses - 1];
+                for (int i = _blurSettings.blurPasses - 2; i > 0; i--)
                 {
-                    _targetsDescriptor.width = _cameraDescriptor.width / (int)Mathf.Pow(2, i);
-                    _targetsDescriptor.height = _cameraDescriptor.height / (int)Mathf.Pow(2, i);
+                    Blit(cmd, lastUp, _mipUpTarget[i], _material, (int)ShaderPass.UpSample);
 
-                    cmd.GetTemporaryRT(EndTargetID, _targetsDescriptor, FilterMode.Bilinear);
-
-                    Blit(cmd, _startTarget, _endTarget, _blurMaterial, (int)ShaderPass.UpSample);
-
-                    cmd.ReleaseTemporaryRT(StartTargetID);
-                    cmd.GetTemporaryRT(StartTargetID, _targetsDescriptor, FilterMode.Bilinear);
-                    cmd.CopyTexture(_endTarget, _startTarget);
-
-                    cmd.ReleaseTemporaryRT(EndTargetID);
+                    lastUp = _mipUpTarget[i];
                 }
 
-                // Final pass
+                // Final pass with some additional filtering (blending with camera texture, dithering...)
+                Blit(cmd, lastUp, _mipUpTarget[0], _material, (int)ShaderPass.FinalUpSample);
+
                 if (_featureSettings.copyToCameraFramebuffer)
                 {
-                    Blit(cmd, _startTarget, _colorTarget, _blurMaterial);
+                    Blit(cmd, _mipUpTarget[0], _colorTarget, _material);
                 }
                 else
                 {
-                    _targetsDescriptor.width = _cameraDescriptor.width;
-                    _targetsDescriptor.height = _cameraDescriptor.height;
-
-                    cmd.GetTemporaryRT(EndTargetID, _targetsDescriptor, FilterMode.Bilinear);
-                    Blit(cmd, _startTarget, _endTarget, _blurMaterial);
-                    cmd.SetGlobalTexture(_featureSettings.blurTextureName, _endTarget);
+                    cmd.SetGlobalTexture(_featureSettings.blurTextureName, _mipUpTarget[0]);
                 }
             }
 
@@ -226,13 +239,16 @@ namespace DeepDreams.RenderFeatures
             }
 
             // Since we created a temporary render texture in OnCameraSetup, we need to release the memory here to avoid a leak.
-            cmd.ReleaseTemporaryRT(StartTargetID);
-            cmd.ReleaseTemporaryRT(EndTargetID);
+            for (int i = 0; i < _blurSettings.blurPasses; i++)
+            {
+                cmd.ReleaseTemporaryRT(_mipUpID[i]);
+                cmd.ReleaseTemporaryRT(_mipDownID[i]);
+            }
         }
 
         public void Dispose()
         {
-            CoreUtils.Destroy(_blurMaterial);
+            CoreUtils.Destroy(_material);
         }
     }
 }

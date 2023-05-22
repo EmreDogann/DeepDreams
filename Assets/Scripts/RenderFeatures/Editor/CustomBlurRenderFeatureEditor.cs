@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEditor;
+using UnityEngine;
 
 namespace DeepDreams.RenderFeatures.Editor
 {
@@ -10,6 +11,7 @@ namespace DeepDreams.RenderFeatures.Editor
         private SerializedProperty renderPassEvent;
 
         private SerializedProperty showInSceneView;
+        private SerializedProperty hdrFiltering;
         private SerializedProperty dithering;
         private SerializedProperty blurModes;
         private SerializedProperty blurTextureName;
@@ -24,8 +26,8 @@ namespace DeepDreams.RenderFeatures.Editor
 
             SerializedProperty featureSettings =
                 serializedObject.FindProperty(nameof(CustomBlurRenderFeature.settings));
-            showInSceneView =
-                featureSettings.FindPropertyRelative(nameof(showInSceneView));
+            showInSceneView = featureSettings.FindPropertyRelative(nameof(showInSceneView));
+            hdrFiltering = featureSettings.FindPropertyRelative(nameof(hdrFiltering));
             dithering = featureSettings.FindPropertyRelative(nameof(dithering));
             blurModes = featureSettings.FindPropertyRelative(nameof(blurModes));
             blurTextureName =
@@ -47,9 +49,12 @@ namespace DeepDreams.RenderFeatures.Editor
 
             if (copyToCameraFramebuffer.boolValue)
             {
+                EditorGUI.indentLevel++;
                 EditorGUILayout.PropertyField(showInSceneView);
+                EditorGUI.indentLevel--;
             }
 
+            EditorGUILayout.PropertyField(hdrFiltering, new GUIContent("HDR Filtering"));
             EditorGUILayout.PropertyField(dithering);
 
             blurModes.intValue =

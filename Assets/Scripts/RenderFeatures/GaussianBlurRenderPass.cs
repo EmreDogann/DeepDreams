@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
@@ -18,8 +19,9 @@ namespace DeepDreams.RenderFeatures
         private enum ShaderPass
         {
             Copy = 0,
-            VerticalBlur = 1,
-            HorizontalBlur = 2
+            InitialDownsample = 1,
+            VerticalBlur = 2,
+            HorizontalBlur = 3
         }
 
         // Settings
@@ -34,6 +36,7 @@ namespace DeepDreams.RenderFeatures
         // Render Targets
         private RenderTargetIdentifier _colorTarget, _tempTarget, _tempTarget2;
         private RenderTextureDescriptor _cameraDescriptor;
+        private readonly GraphicsFormat _hdrFormat;
 
         // Shader property IDs
         private readonly int TempTargetID = Shader.PropertyToID("_TempTarget");
@@ -64,6 +67,19 @@ namespace DeepDreams.RenderFeatures
                     _material.SetTexture(BlueNoiseProperty, _blueNoiseTexture);
                 }
             }
+
+            const FormatUsage usage = FormatUsage.Linear | FormatUsage.Render;
+            if (SystemInfo.IsFormatSupported(GraphicsFormat.B10G11R11_UFloatPack32, usage) &&
+                featureSettings.hdrFiltering) // HDR fallback
+            {
+                _hdrFormat = GraphicsFormat.B10G11R11_UFloatPack32;
+            }
+            else
+            {
+                _hdrFormat = QualitySettings.activeColorSpace == ColorSpace.Linear
+                    ? GraphicsFormat.R8G8B8A8_SRGB
+                    : GraphicsFormat.R8G8B8A8_UNorm;
+            }
         }
 
         // Called per-pass
@@ -83,6 +99,12 @@ namespace DeepDreams.RenderFeatures
 
             // Set the number of depth bits we need for our temporary render texture.
             _cameraDescriptor.depthBufferBits = 0;
+
+            // Start out at half res.
+            _cameraDescriptor.width >>= 1; // Bitwise right shift 1 = Divide by 2.
+            _cameraDescriptor.height >>= 1;
+            _cameraDescriptor.useMipMap = false;
+            _cameraDescriptor.graphicsFormat = _hdrFormat;
 
             // Create a temporary render texture using the descriptor from above.
             cmd.GetTemporaryRT(TempTargetID, _cameraDescriptor, FilterMode.Bilinear);
@@ -104,8 +126,8 @@ namespace DeepDreams.RenderFeatures
                 _material.SetVector(DitheringParamsProperty, new Vector4(
                     renderingData.cameraData.camera.scaledPixelWidth / (float)_blueNoiseTexture.width,
                     renderingData.cameraData.camera.scaledPixelHeight / (float)_blueNoiseTexture.height,
-                    1,
-                    1
+                    1, // Unused
+                    1  // Unused
                 ));
             }
             else
@@ -115,7 +137,7 @@ namespace DeepDreams.RenderFeatures
 
             // Who knows what the point of this is when it invalidates the state changes made from the first ConfigureTarget() call.
             // https://bronsonzgeb.com/index.php/2021/03/20/pseudo-metaballs-with-scriptable-renderer-features-in-unitys-urp/
-            ConfigureTarget(new[] { _tempTarget, _tempTarget2 });
+            // ConfigureTarget(new[] { _tempTarget, _tempTarget2 });
         }
 
         public void SetTarget(RenderTargetIdentifier camerColorTargetIdentifier)
@@ -132,15 +154,16 @@ namespace DeepDreams.RenderFeatures
             {
                 // Blit from the color buffer to a temporary buffer and back. This is needed for a two-pass shader.
                 Blit(cmd, _colorTarget, _tempTarget, _material);
+                Blit(cmd, _tempTarget, _tempTarget2, _material, (int)ShaderPass.VerticalBlur);
+                Blit(cmd, _tempTarget2, _tempTarget, _material, (int)ShaderPass.HorizontalBlur);
 
                 if (_featureSettings.copyToCameraFramebuffer)
                 {
-                    Blit(cmd, _tempTarget, _colorTarget, _material, 1);
+                    Blit(cmd, _tempTarget, _colorTarget, _material);
                 }
                 else
                 {
-                    Blit(cmd, _tempTarget, _tempTarget2, _material, 1);
-                    cmd.SetGlobalTexture(_featureSettings.blurTextureName, _tempTarget2);
+                    cmd.SetGlobalTexture(_featureSettings.blurTextureName, _tempTarget);
                 }
             }
 

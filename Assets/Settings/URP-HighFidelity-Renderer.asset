@@ -13,20 +13,22 @@ MonoBehaviour:
   m_Name: Custom Blur
   m_EditorClassIdentifier: 
   m_Active: 1
-  renderPassEvent: 450
+  renderPassEvent: 500
   settings:
     copyToCameraFramebuffer: 0
     showInSceneView: 0
     dithering: 1
+    hdrFiltering: 1
     blurTextureName: _BlurTexture
     blurModes: 1
   gaussianSettings:
     iterations: 64
     blurSize: 0.2
-    standardDeviation: 0.03
+    standardDeviation: 0.02
   kawaseDualFilterSettings:
-    blurPasses: 3
-    blurSize: 4
+    blurPasses: 5
+    blurSize: 1
+    highQualityFiltering: 1
 --- !u!114 &-2210654903911374551
 MonoBehaviour:
   m_ObjectHideFlags: 0
