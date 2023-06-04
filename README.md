@@ -23,4 +23,3 @@
 
 # Additional Credits
 - [Touchable.cs script used for UI Buttons](https://stackoverflow.com/questions/36888780/how-to-make-an-invisible-transparent-button-work/64074858#64074858) - Ensures backfilling so transparent buttons still capture UI input events.
-- [Kawase Blur](https://github.com/tomc128/urp-kawase-blur) - Used for UI blur background.
