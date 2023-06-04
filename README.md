@@ -20,6 +20,3 @@
 - [Hierarchy Dectorator](https://github.com/WooshiiDev/HierarchyDecorator) - Cosmetic changes to hierarchy tab
 - [Debug Drawing Extensions](https://assetstore.unity.com/packages/tools/debug-drawing-extension-11396) - Used for debugging.
 - [DebugGUI Graph](https://assetstore.unity.com/packages/tools/gui/debuggui-graph-139275) - Used for debugging.
-
-# Additional Credits
-- [Touchable.cs script used for UI Buttons](https://stackoverflow.com/questions/36888780/how-to-make-an-invisible-transparent-button-work/64074858#64074858) - Ensures backfilling so transparent buttons still capture UI input events.
